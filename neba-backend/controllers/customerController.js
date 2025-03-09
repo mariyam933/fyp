@@ -1,5 +1,8 @@
 const { validationResult } = require("express-validator");
 const Customer = require("../models/Customer");
+const User = require("../models/User")
+const sendEmail = require("../utils/sendEmail"); 
+
 
 // Utility function for handling validation errors
 const handleValidationErrors = (req, res) => {
@@ -12,36 +15,67 @@ const handleValidationErrors = (req, res) => {
 };
 
 
-// Create a new customer
-exports.createCustomer = async (req, res) => {
+// // Create a new customer
+// exports.createCustomer = async (req, res) => {
 
+//   const { name, email, address, phone, meterNo } = req.body;
+//   if(!name || !email || !address || !phone || !meterNo) {
+//     return res.status(400).json({ message: "All fields are required" });
+//   }
+
+//   try {
+    
+//     const customerExists = await User.findOne({ email });
+//     if (customerExists) {
+//       return res
+//         .status(409)
+//         .json({ message: "Customer with this email already exists" });
+//     }
+//     const role=2;
+//     const newCustomer = new User({ name, email, address, phone, meterNo,role });
+//     await newCustomer.save();
+
+//     res.status(201).json(newCustomer);
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error", error });
+//   }
+// };
+
+exports.createCustomer = async (req, res) => {
   const { name, email, address, phone, meterNo } = req.body;
-  if(!name || !email || !address || !phone || !meterNo) {
+
+  if (!name || !email || !address || !phone || !meterNo) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
   try {
-    
-    const customerExists = await Customer.findOne({ email });
+    const customerExists = await User.findOne({ email });
     if (customerExists) {
-      return res
-        .status(409)
-        .json({ message: "Customer with this email already exists" });
+      return res.status(409).json({ message: "Customer with this email already exists" });
     }
 
-    const newCustomer = new Customer({ name, email, address, phone, meterNo });
+    const role = 2;
+    const password = "12345678"; 
+    const newCustomer = new User({ name, email, address, phone, meterNo, role, password });
     await newCustomer.save();
+
+    // Send email with credentials
+    const emailText = `Dear ${name},\n\nYour customer account has been created successfully.\n\nYour Credentials:\nEmail: ${email}\nPassword: ${password}\n\nBest Regards,\nNEBA Billings`;
+
+    await sendEmail(email, "Welcome as a Customer!", emailText);
 
     res.status(201).json(newCustomer);
   } catch (error) {
+    console.error("Error creating customer:", error);
     res.status(500).json({ message: "Server error", error });
   }
 };
 
+
 // Get all customers
 exports.getAllCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find();
+    const customers = await User.find({ role: 2 });
     res.status(200).json(customers);
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
@@ -51,7 +85,7 @@ exports.getAllCustomers = async (req, res) => {
 // Get a customer by ID
 exports.getCustomerById = async (req, res) => {
   try {
-    const customer = await Customer.findById(req.params.id);
+    const customer = await User.findById(req.params.id);
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
@@ -91,13 +125,14 @@ exports.updateCustomer = async (req, res) => {
 // Delete a customer
 exports.deleteCustomer = async (req, res) => {
   try {
-    const customer = await Customer.findById(req.params.id);
+    const customer = await User.findById(req.params.id);
+    console.log("Id is sent as",req.params.id);
 
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
 
-    await Customer.findByIdAndDelete(req.params.id);
+    await User.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Customer deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
