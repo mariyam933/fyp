@@ -22,6 +22,41 @@ export function statusConverter(status) {
   }
 }
 
+export const loginValidate=(email)=>{
+  const errors = {} as any;
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    toast.error("Invalid email address.");
+    errors.email = "Invalid email address.";
+  }
+  return errors;
+
+}
+
+export const adminValidate = (name, email, address, phone) => {
+  const errors = {} as any;
+
+  if (!name || name.trim().length < 3) {
+    toast.error("Name must be at least 3 characters long.");
+    errors.name = "Name must be at least 3 characters long.";
+  }
+  else if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    toast.error("Invalid email address.");
+    errors.email = "Invalid email address.";
+  }
+  else if (!address || address.trim().length < 10) {
+    toast.error("Address must be at least 10 characters long.");
+    errors.address = "Address must be at least 10 characters long.";
+  }
+  else if (!phone) {
+    toast.error("Invalid phone number.");
+    errors.phone = "Invalid phone number.";
+  }
+  
+
+  return errors;
+};
+
 export const customerValidate = (name, email, address, phone, meterNo) => {
   const errors = {} as any;
 
@@ -44,6 +79,29 @@ export const customerValidate = (name, email, address, phone, meterNo) => {
   else if (!meterNo || meterNo.trim().length < 6) {
     toast.error("Meter number must be at least 6 characters long.");
     errors.meterNo = "Meter number must be at least 6 characters long.";
+  }
+
+  return errors;
+};
+
+export const meterReaderValidate = (name, email, address, phone) => {
+  const errors = {} as any;
+
+  if (!name || name.trim().length < 3) {
+    toast.error("Name must be at least 3 characters long.");
+    errors.name = "Name must be at least 3 characters long.";
+  }
+  else if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    toast.error("Invalid email address.");
+    errors.email = "Invalid email address.";
+  }
+  else if (!address || address.trim().length < 10) {
+    toast.error("Address must be at least 10 characters long.");
+    errors.address = "Address must be at least 10 characters long.";
+  }
+  else if (!phone) {
+    toast.error("Invalid phone number.");
+    errors.phone = "Invalid phone number.";
   }
 
   return errors;

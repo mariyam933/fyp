@@ -31,23 +31,131 @@ export default function CreateBillModal({ setRefreshUI }) {
     }
   }
 
+  // const scanBill = async () => {
+  //   if (!file) {
+  //     toast.error("Please upload a bill first.")
+  //     return
+  //   }
+
+  //   setScanLoading(true)
+  //   setTimeout(() => {
+  //     // Simulate scanning process (this is where you would call an API for actual OCR or scanning)
+  //     setScanResults({
+  //       unitsConsumed: 150,
+  //       totalBill: 250.75,
+  //       meterSrNo: "1234567890",
+  //     })
+  //     setScanLoading(false)
+  //   }, 5000) // 5 seconds delay to simulate loading
+  // }
+
   const scanBill = async () => {
     if (!file) {
-      toast.error("Please upload a bill first.")
-      return
+      toast.error("Please upload a bill first.");
+      return;
     }
 
-    setScanLoading(true)
-    setTimeout(() => {
-      // Simulate scanning process (this is where you would call an API for actual OCR or scanning)
-      setScanResults({
-        unitsConsumed: 150,
-        totalBill: 250.75,
-        meterSrNo: "1234567890",
-      })
-      setScanLoading(false)
-    }, 5000) // 5 seconds delay to simulate loading
-  }
+    setScanLoading(true);
+
+    // Convert image to Base64
+    // const toBase64 = (file) =>
+    //   new Promise((resolve, reject) => {
+    //     const reader = new FileReader();
+    //     reader.readAsDataURL(file);
+    //     reader.onload = () => reader.result && resolve(reader.result.split(",")[1]); // Remove "data:image/png;base64,"
+    //     reader.onerror = reject;
+    //   });
+    const toBase64 = (file: File): Promise<string> =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          if (typeof reader.result === "string") {
+            resolve(reader.result.split(",")[1]); // Remove "data:image/png;base64,"
+          } else {
+            reject(new Error("FileReader result is not a string"));
+          }
+        };
+        reader.onerror = reject;
+      });
+
+
+    try {
+      const base64Image = await toBase64(file);
+      console.log("Image is as", base64Image);
+
+      const requestBody = {
+        requests: [
+          {
+            image: {
+              content: base64Image,
+            },
+            features: [{ type: "TEXT_DETECTION" }],
+          },
+        ],
+      };
+
+      const response = await fetch(
+        `https://vision.googleapis.com/v1/images:annotate?key=AIzaSyBEiQDIcXhStgzDIsiT094waRwcMHXf9Zc`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      const data = await response.json();
+      console.log("Data is as", data)
+
+      if (data.responses && data.responses[0].textAnnotations) {
+        const formattedText = data.responses[0].textAnnotations[0].description;
+
+        // Ensure each new value is on a new line
+        const extractedText = formattedText.replace(/\s+/g, "\n");
+
+        console.log("Extracted is as", extractedText);
+        // Parse extracted text (assuming a format)
+        // const extractedKWh = extractedText.match(/(\d+)\s*kWh/i)?.[1] || "Unknown";
+        //         const numbers = extractedText.match(/\d+/g)?.map(Number) || [];
+
+        // // Find the largest number
+        // const largestNumber = numbers.length > 0 ? Math.max(...numbers) : "Unknown";
+
+        // console.log("Largest Number:", largestNumber)
+        const numbers = extractedText.match(/\b\d+\b/g) // Match standalone numbers
+        ?.map(num => Number(num)) || []; // Convert to numbers
+      
+      // List of years to ignore
+      const ignoredYears = new Set([
+        2010, 2011, 2012, 2013, 2014, 2015, 2016, 
+        2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024
+      ]);
+      
+      // Filter out ignored years
+      const validNumbers = numbers.filter(num => !ignoredYears.has(num));
+      
+      // Find the largest valid number
+      const largestNumber = validNumbers.length > 0 ? Math.max(...validNumbers) : "Unknown";
+
+
+        const parsedData = {
+          unitsConsumed: largestNumber,
+          totalBill: parseFloat(extractedText.match(/\d+\.\d+/)?.[0]) || 0.0,
+          meterSrNo: extractedText.match(/\d{8,}/)?.[0] || "Unknown",
+        };
+
+        setScanResults(parsedData);
+      } else {
+        toast.error("No text detected in the bill.");
+      }
+    } catch (error) {
+      console.error("Error scanning bill:", error);
+      toast.error("Failed to process bill.");
+    }
+
+    setScanLoading(false);
+  };
+
 
   const createBill = async () => {
     if (!scanResults) {

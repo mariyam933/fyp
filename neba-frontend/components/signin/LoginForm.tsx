@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/context/auth';
 import toast from 'react-hot-toast';
+import { loginValidate } from '@/utils/common';
+import { axiosClient } from '@/utils/axiosClient';
 
 export function LoginForm() {
 
@@ -19,22 +21,94 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter()
 
+  // const submitLogin = async (e: React.FormEvent<HTMLButtonElement>) => {
+  //   e.preventDefault();
+  //   if(email == '' || password == ''){
+  //     toast.error('Email and password are required');
+  //     return;
+  //   }
+
+  //   // email = admin@gmail.com, password = admin
+  //   const errors=loginValidate(email);
+  //   console.log("Email and pass is as",email,password);
+
+  //   if (!Object.keys(errors).length) {
+  //     setLoading(true)
+  //     try {
+  //       const res = await axiosClient.post('/api/auth/login', {
+  //         email,
+  //         password
+        
+  //       });
+  //       toast.success('Login successfully');
+  //       // setRefreshUI((pre) => !pre);
+  //       // reset the form
+  //       localStorage.setItem('userEmail', email);
+  //       localStorage.setItem('userRole', role);
+       
+  //       setEmail("");
+  //       setPassword("");
+  //       router.push('/overview');
+
+       
+  //     } catch (error) {
+  //       toast.error(error.response?.data?.message || "Something went wrong");
+  //     }
+  //     setLoading(false);
+  //   }
+
+
+  //   // if(email === 'admin@gmail.com' && password === 'admin'){
+  //   //   login({_id: '1', fullName: 'Admin', email: 'admin@gmail.com'});
+  //   //   return;
+
+
+  //   // }else{
+  //   //   toast.error('Invalid email or password');
+  //   // }
+  // };
+
   const submitLogin = async (e: React.FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if(email == '' || password == ''){
+    if (email === '' || password === '') {
       toast.error('Email and password are required');
       return;
     }
-
-    // email = admin@gmail.com, password = admin
-    if(email === 'admin@gmail.com' && password === 'admin'){
-      login({_id: '1', fullName: 'Admin', email: 'admin@gmail.com'});
-      return;
-    }else{
-      toast.error('Invalid email or password');
+  
+    const errors = loginValidate(email);
+    console.log("Email and pass is as", email, password);
+  
+    if (Object.keys(errors).length === 0) {
+      setLoading(true);
+      try {
+        const res = await axiosClient.post('/api/auth/login', {
+          email,
+          password
+        });
+  
+        if (res.data.success) {
+          const { email, role } = res.data.user;
+  
+          // Store in localStorage
+          localStorage.setItem('userEmail', email);
+          localStorage.setItem('userRole', role);
+  
+          toast.success('Login successfully');
+  
+          // Reset the form
+          setEmail("");
+          setPassword("");
+          login({ email, role });
+          
+          router.push('/overview');
+        }
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Something went wrong");
+      }
+      setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     if(user){
       router.push('/overview');

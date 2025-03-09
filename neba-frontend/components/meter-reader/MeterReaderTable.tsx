@@ -22,8 +22,8 @@ import {
 
 import { Spinner } from "@/components/ui/loader"
 import { useRouter } from "next/router"
-import CreateCustomerModal from "./CreateCustomerModal"
-import { customerColumns } from "./customer-columns"
+import CreateMeterReaderModal from "./CreateMeterReaderModal"
+import { MeterReaderColumns } from "./MeterReaderColumns"
 
 interface DataTableDemoProps {
   tabledata: any[],
@@ -31,14 +31,14 @@ interface DataTableDemoProps {
   setRefreshUI: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function CustomersTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
+export default function MeterReadersTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
 
   const router = useRouter()
 
   const table = useReactTable({
     data: tabledata || [],
-    columns: customerColumns({ setRefreshUI }),
+    columns: MeterReaderColumns({ setRefreshUI }),
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -73,7 +73,7 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
 
   return (
     <div className="w-full">
-      <h1 className='text-xl text-gray-700 font-semibold'>All Admins</h1>
+      <h1 className='text-xl text-gray-700 font-semibold'>All Meter Readers</h1>
       <div className="flex items-center py-4">
         <Input
           placeholder="Search customers by name..."
@@ -83,7 +83,7 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
           }
           className="max-w-sm"
         />
-        <CreateCustomerModal setRefreshUI={setRefreshUI} />
+        <CreateMeterReaderModal setRefreshUI={setRefreshUI} />
       </div>
       <div className="rounded-md border">
         <Table>
@@ -115,7 +115,7 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    onClick={() => router.push(`/customers/${row.original._id}`)}
+                    // onClick={() => router.push(`/customers/${row.original._id}`)}
                     className="cursor-pointer hover:bg-gray-100"
                   >
                     {row.getVisibleCells().map((cell) => (
