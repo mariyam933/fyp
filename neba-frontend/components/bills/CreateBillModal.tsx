@@ -96,7 +96,9 @@ export default function CreateBillModal({ setRefreshUI }) {
       };
 
       const response = await fetch(
+
         `https://vision.googleapis.com/v1/images:annotate?key=`,
+
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -105,7 +107,9 @@ export default function CreateBillModal({ setRefreshUI }) {
       );
 
       const data = await response.json();
+
       console.log("Data is as", data);
+
 
       if (data.responses && data.responses[0].textAnnotations) {
         const formattedText = data.responses[0].textAnnotations[0].description;
