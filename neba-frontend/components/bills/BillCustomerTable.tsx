@@ -22,8 +22,9 @@ import {
 
 import { Spinner } from "@/components/ui/loader"
 import { useRouter } from "next/router"
-import CreateCustomerModal from "./CreateCustomerModal"
-import { customerColumns } from "./customer-columns"
+import CreateCustomerModal from "../customers/CreateCustomerModal"
+import { billCustomerTableColumns } from "./bill-customertable-column"
+import { customerColumns } from "../customers/customer-columns"
 
 interface DataTableDemoProps {
   tabledata: any[],
@@ -31,14 +32,14 @@ interface DataTableDemoProps {
   setRefreshUI: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function CustomersTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
+export default function BillCustomerTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
 
   const router = useRouter()
 
   const table = useReactTable({
     data: tabledata || [],
-    columns: customerColumns({ setRefreshUI }),
+    columns: billCustomerTableColumns({ setRefreshUI }),
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -73,7 +74,7 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
 
   return (
     <div className="w-full">
-      <h1 className='text-xl text-gray-700 font-semibold'>All Admins</h1>
+      <h1 className='text-xl text-gray-700 font-semibold'>All Customers</h1>
       <div className="flex items-center py-4">
         <Input
           placeholder="Search customers by name..."
@@ -83,7 +84,6 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
           }
           className="max-w-sm"
         />
-        <CreateCustomerModal setRefreshUI={setRefreshUI} />
       </div>
       <div className="rounded-md border">
         <Table>

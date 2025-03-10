@@ -22,8 +22,10 @@ import {
 
 import { Spinner } from "@/components/ui/loader"
 import { useRouter } from "next/router"
-import CreateCustomerModal from "./CreateCustomerModal"
-import { customerColumns } from "./customer-columns"
+import CreateAdminModal from "../admins/CreateAdminModal"
+import CreateCustomerModal from "../customers/CreateCustomerModal"
+import { customerColumns } from "../customers/customer-columns"
+import { adminColumns } from "./admin-columns"
 
 interface DataTableDemoProps {
   tabledata: any[],
@@ -31,14 +33,14 @@ interface DataTableDemoProps {
   setRefreshUI: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function CustomersTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
+export default function AdminTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
 
   const router = useRouter()
 
   const table = useReactTable({
     data: tabledata || [],
-    columns: customerColumns({ setRefreshUI }),
+    columns: adminColumns({ setRefreshUI }),
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -83,7 +85,7 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
           }
           className="max-w-sm"
         />
-        <CreateCustomerModal setRefreshUI={setRefreshUI} />
+        <CreateAdminModal setRefreshUI={setRefreshUI} />
       </div>
       <div className="rounded-md border">
         <Table>
@@ -115,7 +117,7 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    onClick={() => router.push(`/customers/${row.original._id}`)}
+                    // onClick={() => router.push(`/customers/${row.original._id}`)}
                     className="cursor-pointer hover:bg-gray-100"
                   >
                     {row.getVisibleCells().map((cell) => (

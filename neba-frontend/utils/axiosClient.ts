@@ -3,6 +3,7 @@ import axios from 'axios';
 // Set base API URLs for production and development
 const apiUrlProd = process.env.NEXT_PUBLIC_API_URL_PROD;
 const apiUrlDev = process.env.NEXT_PUBLIC_API_URL_DEV;
+console.log("url are ",apiUrlProd,apiUrlDev)
 
 // Create an Axios instance
 export const axiosClient = axios.create({
