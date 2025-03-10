@@ -8,7 +8,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const meterController = require("../controllers/meterController");
+// const meterController = require("../controllers/meterController");
 const { validateToken } = require("../middlewares/validateToken");
 
 // Configure multer for meter image uploads
@@ -56,33 +56,33 @@ const upload = multer({
 
 // Routes
 // Process meter reading image
-router.post(
-  "/process",
-  validateToken,
-  upload.single("meterImage"),
-  meterController.processMeterReadingImage
-);
+// router.post(
+//   "/process",
+//   validateToken,
+//   upload.single("meterImage"),
+//   meterController.processMeterReadingImage
+// );
 
-// Save processed bill
-router.post("/save-bill", validateToken, meterController.saveBill);
+// // Save processed bill
+// router.post("/save-bill", validateToken, meterController.saveBill);
 
-// Get meter reading history
-router.get("/history/:meterId", validateToken, meterController.getMeterHistory);
+// // Get meter reading history
+// router.get("/history/:meterId", validateToken, meterController.getMeterHistory);
 
-// Get current tariff rates
-router.get("/tariff-rates", validateToken, meterController.getTariffRates);
+// // Get current tariff rates
+// router.get("/tariff-rates", validateToken, meterController.getTariffRates);
 
-// Update tariff rates (admin only)
-router.put("/tariff-rates", validateToken, meterController.updateTariffRates);
+// // Update tariff rates (admin only)
+// router.put("/tariff-rates", validateToken, meterController.updateTariffRates);
 
-// Process manual meter reading (when OCR fails)
-router.post(
-  "/manual-reading",
-  validateToken,
-  meterController.processManualReading
-);
+// // Process manual meter reading (when OCR fails)
+// router.post(
+//   "/manual-reading",
+//   validateToken,
+//   meterController.processManualReading
+// );
 
-// Search meters by address or customer
-router.get("/search", validateToken, meterController.searchMeters);
+// // Search meters by address or customer
+// router.get("/search", validateToken, meterController.searchMeters);
 
 module.exports = router;

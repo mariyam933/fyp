@@ -26,6 +26,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/customer", require("./routes/customerRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/meter-reader",require("./routes/meterReaderRoutes"))
 app.use("/api/bill", require("./routes/billRoutes"));
 app.use("/api/meter-readings", require("./routes/meterRoutes"));
 

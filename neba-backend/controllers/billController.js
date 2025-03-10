@@ -1,4 +1,5 @@
 const Bill = require("../models/Bill");
+const User=require("../models/User")
 const Customer = require("../models/Customer"); // Ensure to import the Customer model
 
 // Create a new bill for a customer
@@ -6,12 +7,14 @@ exports.createBill = async (req, res) => {
   try {
     console.log(req.body , 'saddam');
     const { customerId, unitsConsumed, totalBill, meterSrNo } = req.body;
+    console.log("The values",req.body)
 
     // Ensure the customer exists
-    const customer = await Customer.findById(customerId);
+    const customer = await User.findById(customerId);
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
+
 
     // Create a new Bill
     const newBill = new Bill({
