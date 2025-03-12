@@ -37,14 +37,14 @@ export default function EditBillModal({
 
   const editBill = async (e: React.FormEvent<HTMLButtonElement>) => {
     e.preventDefault()
-    const errors = billValidate(unitsConsumed, totalBill, meterSrNo) // Call bill validation function
+    const errors = billValidate(unitsConsumed, totalBill, meterSrNo);
     if (!Object.keys(errors).length) {
       setLoading(true)
       try {
         await axiosClient.put(`/api/bill/${billData._id}`, {
           srNo,
           unitsConsumed,
-          totalBill,
+          // totalBill,
           meterSrNo,
         })
         toast.success("Bill updated successfully")
@@ -66,11 +66,12 @@ export default function EditBillModal({
         </DialogHeader>
         <form>
           <div className="py-4">
-            <h2 className="font-medium mt-3">Units Consumed</h2>
+            <h2 className="font-medium mt-3">Current Reading</h2>
             <Input
               id="unitsConsumed"
               value={unitsConsumed}
               placeholder="100"
+
               onChange={(e) => setUnitsConsumed(e.target.value)}
               className="mt-2"
             />
@@ -78,9 +79,10 @@ export default function EditBillModal({
             <Input
               id="totalBill"
               value={totalBill}
+              readOnly
               placeholder="200"
-              onChange={(e) => setTotalBill(e.target.value)}
-              className="mt-2"
+              // onChange={(e) => setTotalBill(e.target.value)}
+              className="mt-2 bg-gray-200 text-gray-500 cursor-not-allowed"
             />
             <h2 className="font-medium mt-3">Meter Serial Number</h2>
             <Input

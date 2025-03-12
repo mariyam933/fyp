@@ -27,14 +27,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useEffect(() => {
     if (userRole) {
       const allowedPaths = rolePermissions[userRole] || [];
-      
+
       // Check if exact match or dynamic customer route
       if (!allowedPaths.includes(router.pathname) && !router.pathname.startsWith("/customers/")) {
         router.replace("/overview");
       }
     }
   }, [router.pathname, userRole]);
-  
+
 
   const navItems = [
     { name: "Overview", icon: LayoutDashboard, path: "/overview" },
@@ -51,20 +51,23 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Sidebar */}
       <aside className="fixed top-0 left-0 z-40 w-64 h-screen bg-gray-800">
         <div className="h-full px-3 py-4 overflow-y-auto">
-          <img src="/asset/icons/logo.svg" alt="Logo" className="w-[120px] mb-10 ml-2" />
+          <div className="mb-10 flex items-center">
+            <img src="/asset/images/NUST-Signature-01.png" alt="Logo" className="w-[120px]" />
+            {/* <div className="text-xl text-[#a0c4ff] font-bold italics">NEBA Billing</div>*/}
+          </div>
+
           <ul className="space-y-2 font-medium">
             {navItems.map(({ name, icon: Icon, path }) => (
               <li key={name}>
                 <Link
                   href={path}
-                  className={`flex items-center p-2 rounded-lg group ${
-                    (router.pathname === path || (path === "/bills" && router.pathname.startsWith("/customers/"))) 
-                      ? "bg-blue-600 text-white" 
-                      : "text-gray-400 hover:bg-gray-700 hover:text-white"
-                  }`}
-                  
-                  // className={`flex items-center p-2 rounded-lg group ${router.pathname === path ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-700 hover:text-white"
-                    // }`}
+                  className={`flex items-center p-2 rounded-lg group ${(router.pathname === path || (path === "/bills" && router.pathname.startsWith("/customers/")))
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-400 hover:bg-gray-700 hover:text-white"
+                    }`}
+
+                // className={`flex items-center p-2 rounded-lg group ${router.pathname === path ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-700 hover:text-white"
+                // }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="ml-3">{name}</span>

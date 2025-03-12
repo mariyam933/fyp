@@ -24,8 +24,10 @@ export function statusConverter(status) {
 
 export const loginValidate=(email)=>{
   const errors = {} as any;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+
+  if (!email || !emailRegex.test(email)) {
     toast.error("Invalid email address.");
     errors.email = "Invalid email address.";
   }
@@ -36,11 +38,19 @@ export const loginValidate=(email)=>{
 export const adminValidate = (name, email, address, phone) => {
   const errors = {} as any;
 
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  // const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?$/;
+  // const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
+
+
+
+
   if (!name || name.trim().length < 3) {
     toast.error("Name must be at least 3 characters long.");
     errors.name = "Name must be at least 3 characters long.";
   }
-  else if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+
+  else if (!email || !emailRegex.test(email)) {
     toast.error("Invalid email address.");
     errors.email = "Invalid email address.";
   }
@@ -59,12 +69,14 @@ export const adminValidate = (name, email, address, phone) => {
 
 export const customerValidate = (name, email, address, phone, meterNo) => {
   const errors = {} as any;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 
   if (!name || name.trim().length < 3) {
     toast.error("Name must be at least 3 characters long.");
     errors.name = "Name must be at least 3 characters long.";
   }
-  else if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  else if (!email || !emailRegex.test(email)) {
     toast.error("Invalid email address.");
     errors.email = "Invalid email address.";
   }
@@ -86,12 +98,14 @@ export const customerValidate = (name, email, address, phone, meterNo) => {
 
 export const meterReaderValidate = (name, email, address, phone) => {
   const errors = {} as any;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 
   if (!name || name.trim().length < 3) {
     toast.error("Name must be at least 3 characters long.");
     errors.name = "Name must be at least 3 characters long.";
   }
-  else if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  else if (!email || !emailRegex.test(email)) {
     toast.error("Invalid email address.");
     errors.email = "Invalid email address.";
   }

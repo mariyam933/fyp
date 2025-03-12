@@ -10,13 +10,12 @@ export function Layout({ children }: LayoutProps): React.JSX.Element {
     <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-2">
       <div className="flex flex-1 flex-col">
         <div className="p-3">
-          <Link href="/" className="inline-block text-0">
             <img
-              src="/asset/icons/logo--dark.svg"
+              src="/asset/images/NUST-Signature-01.png"
               alt="Logo"
-              className="h-8 w-[122px]"
+              className=" w-[122px]"
             />
-          </Link>
+
         </div>
         <div className="flex flex-1 items-center justify-center p-3">
           <div className="max-w-[450px] w-full">{children}</div>

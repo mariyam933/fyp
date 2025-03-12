@@ -25,8 +25,10 @@ import { useRouter } from "next/router"
 import CreateCustomerModal from "./CreateBillModal"
 import { billsColumns } from "./bills-columns"
 import CreateBillModal from "./CreateBillModal"
+import CheckBillModal from "./CheckBillModal"
 
 import { useAuth } from "@/context/auth"
+import { Check } from "lucide-react"
 
 interface DataTableDemoProps {
   tabledata: any[],
@@ -90,7 +92,8 @@ export default function BillsTable({ tabledata, loading, setRefreshUI }: DataTab
           }
           className="max-w-sm"
         />
-       {userRole===2?"": <CreateBillModal setRefreshUI={setRefreshUI}/>}
+       {userRole===2?<CheckBillModal setRefreshUI={setRefreshUI}></CheckBillModal>: <CreateBillModal setRefreshUI={setRefreshUI}/>}
+       {/* <CheckBillModal setRefreshUI={setRefreshUI}></CheckBillModal> */}
       </div>
       <div className="rounded-md border">
         <Table>
