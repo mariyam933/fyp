@@ -8,6 +8,9 @@ router.post("/", billController.createBill);
 // Route to get all bills
 router.get("/", billController.getBills);
 
+router.get("/prev/:customerId", billController.getPreviousMonthUnits);
+
+
 // Route to get bills by customer ID
 router.get("/:customerId", billController.getBillsByCustomerId);
 
