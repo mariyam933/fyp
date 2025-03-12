@@ -5,9 +5,13 @@ const Customer = require("../models/Customer"); // Ensure to import the Customer
 // Create a new bill for a customer
 exports.createBill = async (req, res) => {
   try {
-    console.log(req.body , 'saddam');
-    const { customerId, unitsConsumed, totalBill, meterSrNo } = req.body;
-    console.log("The values",req.body)
+    console.log(req.body, "saddam");
+    const { customerId, meterSrNo, currentReading } = req.body;
+
+    // Ensure customerId and currentReading are valid numbers
+    if (!customerId || currentReading == null || isNaN(Number(currentReading))) {
+      return res.status(400).json({ message: "Invalid customerId or currentReading" });
+    }
 
     // Ensure the customer exists
     const customer = await User.findById(customerId);
@@ -15,13 +19,29 @@ exports.createBill = async (req, res) => {
       return res.status(404).json({ message: "Customer not found" });
     }
 
+    // Find the previous bill for this customer
+    const previousBill = await Bill.findOne({ customerId })
+      .sort({ createdAt: -1 })
+      .limit(1);
+
+    // Get previous reading or set to 0 if no previous bill exists
+    const prevReading = previousBill ? Number(previousBill.unitsConsumed) : 0;
+
+    // Ensure valid subtraction
+    const unitsConsumed = Number(currentReading) - prevReading;
+
+    if (unitsConsumed < 0) {
+      return res.status(400).json({ message: "Current reading is less than previous reading" });
+    }
+
+    const totalBill=unitsConsumed*35;
 
     // Create a new Bill
     const newBill = new Bill({
       customerId,
       meterSrNo,
       unitsConsumed,
-      totalBill
+      totalBill,
     });
 
     await newBill.save();
@@ -31,6 +51,36 @@ exports.createBill = async (req, res) => {
     return res.status(500).json({ message: "Error creating bill" });
   }
 };
+
+
+// exports.createBill = async (req, res) => {
+//   try {
+//     console.log(req.body , 'saddam');
+//     const { customerId, unitsConsumed, totalBill, meterSrNo } = req.body;
+//     console.log("The values",req.body)
+
+//     // Ensure the customer exists
+//     const customer = await User.findById(customerId);
+//     if (!customer) {
+//       return res.status(404).json({ message: "Customer not found" });
+//     }
+
+
+//     // Create a new Bill
+//     const newBill = new Bill({
+//       customerId,
+//       meterSrNo,
+//       unitsConsumed,
+//       totalBill
+//     });
+
+//     await newBill.save();
+//     return res.status(201).json(newBill);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: "Error creating bill" });
+//   }
+// };
 
 // Get all bills
 exports.getBills = async (req, res) => {

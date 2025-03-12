@@ -24,6 +24,7 @@ import { Spinner } from "@/components/ui/loader"
 import { useRouter } from "next/router"
 import CreateMeterReaderModal from "./CreateMeterReaderModal"
 import { MeterReaderColumns } from "./MeterReaderColumns"
+import { useAuth } from "@/context/auth"
 
 interface DataTableDemoProps {
   tabledata: any[],
@@ -33,6 +34,11 @@ interface DataTableDemoProps {
 
 export default function MeterReadersTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
+
+    const auth = useAuth();
+    const userRole = Number(auth?.user?.role);
+
+console.log("User role is as",userRole)
 
   const router = useRouter()
 
@@ -83,7 +89,7 @@ export default function MeterReadersTable({ tabledata, loading, setRefreshUI }: 
           }
           className="max-w-sm"
         />
-        <CreateMeterReaderModal setRefreshUI={setRefreshUI} />
+       {userRole==3?"": <CreateMeterReaderModal setRefreshUI={setRefreshUI} />}
       </div>
       <div className="rounded-md border">
         <Table>

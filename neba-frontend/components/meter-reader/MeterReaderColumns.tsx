@@ -6,6 +6,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/context/auth"
 
 import {
   ColumnDef,
@@ -22,7 +23,10 @@ interface getCol {
 }
 
 export const MeterReaderColumns = (options: getCol = {}): ColumnDef<any>[] => {
-  const { setRefreshUI } = options
+  const { setRefreshUI } = options;
+      const auth = useAuth();
+  const userRole = Number(auth?.user?.role);
+
   return [
     {
       accessorKey: "name",
@@ -86,40 +90,48 @@ export const MeterReaderColumns = (options: getCol = {}): ColumnDef<any>[] => {
       },
       cell: ({ row }) => <div className="px-4">{row.getValue("phone")}</div>,
     },
+
+     // Conditionally add the actions column only if userRole === 3
+     ...(userRole !== 3
+      ? [
+          {
+            id: "actions",
+            enableHiding: false,
+            cell: ({ row }) => {
+              const router = useRouter();
+              const [showModal, setShowModal] = useState(false);
+              const [showEditModal, setShowEditModal] = useState(false);
+
+              return (
+                <>
+                  {/* <UpdateCustomerModal customerData={row.original} showModal={showEditModal} setShowModal={setShowEditModal} setRefreshUI={setRefreshUI} />
+                  <ConfirmCustomerDeleteModal setRefreshUI={setRefreshUI} showModal={showModal} setShowModal={setShowModal} customerId={row.original._id} /> */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => setShowEditModal(true)}>Edit</DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setShowModal(true)}
+                        className="!text-red-500 hover:!bg-red-50"
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              );
+            },
+          },
+        ]
+      : []),
     
-    {
-      id: "actions",
-      enableHiding: false,
-      cell: ({ row }) => {
-        const router = useRouter()
-        const [showModal, setShowModal] = useState(false)
-        // const [selectedAdmin, setSelectedAdmin] = useState(null)
-        const [showEditModal, setShowEditModal] = useState(false)
-        return (
-          <>
-          {/* delete not working for meter reader not yet implemented so that's why i ma commenting it*/}
-            {/* <UpdateCustomerModal customerData={row.original} showModal={showEditModal} setShowModal={setShowEditModal} setRefreshUI={setRefreshUI} />
-            <ConfirmCustomerDeleteModal setRefreshUI={setRefreshUI} showModal={showModal} setShowModal={setShowModal} customerId={row.original._id} /> */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={(e) => setShowEditModal(true)}>
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowModal(true)} className="!text-red-500 hover:!bg-red-50" >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        )
-      },
-    },
+   
+    
   ]
 }

@@ -86,9 +86,11 @@ export default function EditBillModal({
             <Input
               id="meterSrNo"
               value={meterSrNo}
+              readOnly
               placeholder="1234567890"
-              onChange={(e) => setMeterSrNo(e.target.value)}
-              className="mt-2"
+              // onChange={(e) => setMeterSrNo(e.target.value)}
+              className="mt-2 bg-gray-200 text-gray-500 cursor-not-allowed"
+
             />
           </div>
           <DialogFooter>

@@ -26,6 +26,8 @@ import CreateCustomerModal from "./CreateBillModal"
 import { billsColumns } from "./bills-columns"
 import CreateBillModal from "./CreateBillModal"
 
+import { useAuth } from "@/context/auth"
+
 interface DataTableDemoProps {
   tabledata: any[],
   loading?: boolean,
@@ -33,9 +35,13 @@ interface DataTableDemoProps {
 }
 
 export default function BillsTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+    const auth=useAuth();
+    const userRole=Number(auth?.user?.role);
 
   const router = useRouter()
+  const { meterNo } = router.query;
+
 
   const table = useReactTable({
     data: tabledata || [],
@@ -84,7 +90,7 @@ export default function BillsTable({ tabledata, loading, setRefreshUI }: DataTab
           }
           className="max-w-sm"
         />
-        <CreateBillModal setRefreshUI={setRefreshUI} />
+       {userRole===2?"": <CreateBillModal setRefreshUI={setRefreshUI}/>}
       </div>
       <div className="rounded-md border">
         <Table>

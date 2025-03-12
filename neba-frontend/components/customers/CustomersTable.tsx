@@ -115,7 +115,7 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    onClick={() => router.push(`/customers/${row.original._id}`)}
+                    // onClick={() => router.push(`/customers/${row.original._id}`)}
                     className="cursor-pointer hover:bg-gray-100"
                   >
                     {row.getVisibleCells().map((cell) => (

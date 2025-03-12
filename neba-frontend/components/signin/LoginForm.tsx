@@ -87,18 +87,15 @@ export function LoginForm() {
         });
   
         if (res.data.success) {
-          const { email, role } = res.data.user;
+          const { email, role,id } = res.data.user;
   
-          // Store in localStorage
-          localStorage.setItem('userEmail', email);
-          localStorage.setItem('userRole', role);
   
           toast.success('Login successfully');
   
           // Reset the form
           setEmail("");
           setPassword("");
-          login({ email, role });
+          login({ email, role,id });
           
           router.push('/overview');
         }
@@ -120,7 +117,7 @@ export function LoginForm() {
       {/* Header Section */}
       <div className="space-y-2">
         <h4 className="text-2xl font-semibold">Sign in</h4>
-        <p className="text-sm text-gray-600">
+        {/* <p className="text-sm text-gray-600">
           Don&apos;t have an account?{' '}
           <Link
             href="/auth/sign-up"
@@ -128,7 +125,7 @@ export function LoginForm() {
           >
             Sign up
           </Link>
-        </p>
+        </p> */}
       </div>
 
       {/* Form Section */}

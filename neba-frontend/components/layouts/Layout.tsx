@@ -15,8 +15,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const rolePermissions: Record<string, string[]> = {
     "1": ["/overview", "/admins", "/customers", "/meter-reader", "/bills", "/settings", "/account"],
-    "2": ["/overview", "/customers", "/meter-reader", "/bills", "/settings", "/account"],
-    "3": ["/overview", "/bills", "/account"],
+    "3": ["/overview", "/meter-reader", "/bills", "/account"],
+    "2": ["/overview", "/bills", "/account"],
   };
 
   // useEffect(() => {

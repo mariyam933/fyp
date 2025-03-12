@@ -15,7 +15,7 @@ import toast from "react-hot-toast"
 import UploadImage from "./UploadImage"
 import { useRouter } from "next/router"
 
-export default function CreateBillModal({ setRefreshUI }) {
+export default function CreateBillModal({ setRefreshUI}) {
   const [file, setFile] = useState<File | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -118,11 +118,10 @@ export default function CreateBillModal({ setRefreshUI }) {
         const extractedText = formattedText.replace(/\s+/g, "\n");
 
         console.log("Extracted is as", extractedText);
-        // Parse extracted text (assuming a format)
-        // const extractedKWh = extractedText.match(/(\d+)\s*kWh/i)?.[1] || "Unknown";
+
+       // const extractedKWh = extractedText.match(/(\d+)\s*kWh/i)?.[1] || "Unknown";
         //         const numbers = extractedText.match(/\d+/g)?.map(Number) || [];
 
-        // // Find the largest number
         // const largestNumber = numbers.length > 0 ? Math.max(...numbers) : "Unknown";
 
         // console.log("Largest Number:", largestNumber)
@@ -139,13 +138,16 @@ export default function CreateBillModal({ setRefreshUI }) {
       const validNumbers = numbers.filter(num => !ignoredYears.has(num));
       
       // Find the largest valid number
-      const largestNumber = validNumbers.length > 0 ? Math.max(...validNumbers) : "Unknown";
+      let largestNumber: number | string = validNumbers.length > 0 ? Math.max(...validNumbers) : "Unknown";
 
+      if (extractedText.includes("THREE") && typeof largestNumber === "number") {
+        largestNumber = Math.floor(largestNumber / 100);
+      }
 
         const parsedData = {
           unitsConsumed: largestNumber,
           totalBill: parseFloat(extractedText.match(/\d+\.\d+/)?.[0]) || 0.0,
-          meterSrNo: extractedText.match(/\d{8,}/)?.[0] || "Unknown",
+          meterSrNo: router.query.meterNo
         };
 
         setScanResults(parsedData);
@@ -170,9 +172,9 @@ export default function CreateBillModal({ setRefreshUI }) {
     setLoading(true)
     try {
       const data = {
-        unitsConsumed: scanResults.unitsConsumed,
+        currentReading: scanResults.unitsConsumed,
         totalBill: scanResults.totalBill,
-        meterSrNo: scanResults.meterSrNo,
+        meterSrNo: router.query.meterNo,
         customerId: router.query.customerId,
       }
       // Assuming you are sending this data to your backend
@@ -237,7 +239,7 @@ export default function CreateBillModal({ setRefreshUI }) {
               <div className="mt-4">
                 <h3 className="font-medium">Scan Results</h3>
                 <p>Units Consumed: {scanResults.unitsConsumed}</p>
-                <p>Total Bill: ${scanResults.totalBill.toFixed(2)}</p>
+                {/* <p>Total Bill: ${scanResults.totalBill.toFixed(2)}</p> */}
                 <p>Meter Serial No: {scanResults.meterSrNo}</p>
               </div>
             )}

@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useEffect } from "react"
 import {
   SortingState,
   flexRender,
@@ -25,6 +26,7 @@ import { useRouter } from "next/router"
 import CreateCustomerModal from "../customers/CreateCustomerModal"
 import { billCustomerTableColumns } from "./bill-customertable-column"
 import { customerColumns } from "../customers/customer-columns"
+import { useAuth } from "@/context/auth"
 
 interface DataTableDemoProps {
   tabledata: any[],
@@ -34,6 +36,17 @@ interface DataTableDemoProps {
 
 export default function BillCustomerTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
+
+  const auth=useAuth();
+  const userId = auth?.user?.id;
+  const userRole=Number(auth?.user?.role);
+
+  useEffect(() => {
+    if (userRole === 2) {
+      router.replace(`/customers/${userId}?bills`);
+    }
+  }, [userRole, userId]);
+
 
   const router = useRouter()
 
@@ -115,7 +128,7 @@ export default function BillCustomerTable({ tabledata, loading, setRefreshUI }: 
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    onClick={() => router.push(`/customers/${row.original._id}`)}
+                    onClick={() => router.push(`/customers/${row.original._id}?meterNo=${row.original.meterNo}`)}
                     className="cursor-pointer hover:bg-gray-100"
                   >
                     {row.getVisibleCells().map((cell) => (
