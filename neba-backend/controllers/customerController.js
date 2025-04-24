@@ -63,6 +63,12 @@ exports.createCustomer = async (req, res) => {
     const emailText = `Dear ${name},\n\nYour customer account has been created successfully.\n\nYour Credentials:\nEmail: ${email}\nPassword: ${password}\n\nBest Regards,\nNEBA Billings`;
 
     await sendEmail(email, "Welcome as a Customer!", emailText);
+    try {
+      await sendEmail(email, "Welcome as a Customer!", emailText);
+    } catch (emailError) {
+      console.error("Error sending email:", emailError);
+    }
+    console.log("Coming in create customer")
 
     res.status(201).json(newCustomer);
   } catch (error) {
