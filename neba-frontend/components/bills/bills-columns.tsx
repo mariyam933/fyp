@@ -95,10 +95,30 @@ export const billsColumns = (options: getCol = {}): ColumnDef<any>[] => {
       ),
     },
     {
+      accessorKey: "imageUrl",
+      header: "Meter Reading",
+      cell: ({ row }) => {
+        const imageUrl = row.original.imageUrl;
+        return imageUrl ? (
+          <div className="flex items-center justify-center">
+            <img
+              src={imageUrl}
+              alt="Meter Reading"
+              className="w-20 h-20 object-cover rounded border border-gray-200"
+              onClick={() => window.open(imageUrl, "_blank")}
+              style={{ cursor: "pointer" }}
+            />
+          </div>
+        ) : (
+          <div className="text-gray-400 text-center">No image</div>
+        );
+      },
+    },
+    {
       id: "download",
       header: "Download",
       cell: ({ row }) => {
-        const handleDownload = () => {
+        const handleDownload = async () => {
           const doc = new jsPDF();
 
           // Add title
@@ -114,6 +134,30 @@ export const billsColumns = (options: getCol = {}): ColumnDef<any>[] => {
 
           // Add date
           doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 80);
+
+          // Add image if available
+          if (row.original.imageUrl) {
+            try {
+              // Add image title
+              doc.text("Meter Reading Image:", 20, 100);
+
+              // Load and add the image
+              const img = new Image();
+              img.src = row.original.imageUrl;
+
+              // Wait for image to load
+              await new Promise((resolve) => {
+                img.onload = resolve;
+              });
+
+              // Add image to PDF (scaled to fit)
+              const imgWidth = 100;
+              const imgHeight = (img.height * imgWidth) / img.width;
+              doc.addImage(img, "JPEG", 20, 110, imgWidth, imgHeight);
+            } catch (error) {
+              console.error("Error adding image to PDF:", error);
+            }
+          }
 
           // Save the PDF
           doc.save(`bill_${row.original.meterSrNo}.pdf`);

@@ -2,12 +2,15 @@ const Bill = require("../models/Bill");
 const User = require("../models/User");
 const Customer = require("../models/Customer"); // Ensure to import the Customer model
 const PDFDocument = require("pdfkit");
+const cloudinary = require("../config/cloudinaryConfig");
+const path = require("path");
+const fs = require("fs");
 
 // Create a new bill for a customer
 exports.createBill = async (req, res) => {
   try {
-    console.log(req.body, "saddam");
-    const { customerId, meterSrNo, currentReading } = req.body;
+    console.log("Request body:", req.body);
+    const { customerId, meterSrNo, currentReading, imageFile } = req.body;
 
     // Ensure customerId and currentReading are valid numbers
     if (
@@ -45,19 +48,47 @@ exports.createBill = async (req, res) => {
 
     const totalBill = unitsConsumed * 35;
 
+    // Handle image upload to Cloudinary if image is provided
+    let imageUrl = null;
+    if (imageFile) {
+      try {
+        console.log("Uploading image to Cloudinary...");
+        // Upload image to Cloudinary
+        const uploadResult = await cloudinary.uploader.upload(imageFile, {
+          folder: "bill_images",
+          resource_type: "image",
+          public_id: `bill_${meterSrNo}_${Date.now()}`,
+          tags: ["bill", meterSrNo],
+        });
+        console.log("Cloudinary upload result:", uploadResult);
+        imageUrl = uploadResult.secure_url;
+      } catch (error) {
+        console.error("Error uploading image to Cloudinary:", error);
+        return res.status(500).json({
+          message: "Error uploading bill image",
+          error: error.message,
+        });
+      }
+    }
+
     // Create a new Bill
     const newBill = new Bill({
       customerId,
       meterSrNo,
       unitsConsumed,
       totalBill,
+      imageUrl,
+      isOcrProcessed: true,
     });
 
     await newBill.save();
     return res.status(201).json(newBill);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Error creating bill" });
+    console.error("Error in createBill:", error);
+    return res.status(500).json({
+      message: "Error creating bill",
+      error: error.message,
+    });
   }
 };
 
