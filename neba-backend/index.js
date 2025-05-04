@@ -34,6 +34,7 @@ app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/meter-reader", require("./routes/meterReaderRoutes"));
 app.use("/api/bill", require("./routes/billRoutes"));
 app.use("/api/meter-readings", require("./routes/meterRoutes"));
+app.use("/api/rate-settings", require("./routes/rateSettingsRoutes"));
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -5,14 +5,13 @@ const PDFDocument = require("pdfkit");
 const cloudinary = require("../config/cloudinaryConfig");
 const path = require("path");
 const fs = require("fs");
+const RateSettings = require("../models/RateSettings");
 
-// Create a new bill for a customer
 exports.createBill = async (req, res) => {
   try {
     console.log("Request body:", req.body);
     const { customerId, meterSrNo, currentReading, imageFile } = req.body;
 
-    // Ensure customerId and currentReading are valid numbers
     if (
       !customerId ||
       currentReading == null ||
@@ -23,21 +22,17 @@ exports.createBill = async (req, res) => {
         .json({ message: "Invalid customerId or currentReading" });
     }
 
-    // Ensure the customer exists
     const customer = await User.findById(customerId);
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
 
-    // Find the previous bill for this customer
     const previousBill = await Bill.findOne({ customerId })
       .sort({ createdAt: -1 })
       .limit(1);
 
-    // Get previous reading or set to 0 if no previous bill exists
     const prevReading = previousBill ? Number(previousBill.unitsConsumed) : 0;
 
-    // Ensure valid subtraction
     const unitsConsumed = Number(currentReading) - prevReading;
 
     if (unitsConsumed < 0) {
@@ -46,14 +41,15 @@ exports.createBill = async (req, res) => {
         .json({ message: "Current reading is less than previous reading" });
     }
 
-    const totalBill = unitsConsumed * 35;
+    // Get current rate from settings
+    const rateSettings = await RateSettings.findOne().sort({ createdAt: -1 });
+    const ratePerUnit = rateSettings ? rateSettings.ratePerUnit : 35;
+    const totalBill = unitsConsumed * ratePerUnit;
 
-    // Handle image upload to Cloudinary if image is provided
     let imageUrl = null;
     if (imageFile) {
       try {
         console.log("Uploading image to Cloudinary...");
-        // Upload image to Cloudinary
         const uploadResult = await cloudinary.uploader.upload(imageFile, {
           folder: "bill_images",
           resource_type: "image",
@@ -71,7 +67,6 @@ exports.createBill = async (req, res) => {
       }
     }
 
-    // Create a new Bill
     const newBill = new Bill({
       customerId,
       meterSrNo,
