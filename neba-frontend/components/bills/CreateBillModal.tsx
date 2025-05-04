@@ -21,6 +21,7 @@ export default function CreateBillModal({ setRefreshUI }) {
   const [loading, setLoading] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
   const [scanResults, setScanResults] = useState<any>(null);
+  const [unitPrice, setUnitPrice] = useState<number>(35); // Default unit price
 
   const router = useRouter();
   console.log("router", router.query.customerId);
@@ -127,16 +128,13 @@ export default function CreateBillModal({ setRefreshUI }) {
             .match(/\b\d+\b/g) // Match standalone numbers
             ?.map((num) => Number(num)) || []; // Convert to numbers
 
-        // List of years to ignore
         const ignoredYears = new Set([
           2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020,
           2021, 2022, 2023, 2024,
         ]);
 
-        // Filter out ignored years
         const validNumbers = numbers.filter((num) => !ignoredYears.has(num));
 
-        // Find the largest valid number
         let largestNumber: number | string =
           validNumbers.length > 0 ? Math.max(...validNumbers) : "Unknown";
 
@@ -173,7 +171,6 @@ export default function CreateBillModal({ setRefreshUI }) {
 
     setLoading(true);
     try {
-      // Optimize and convert image to base64
       const optimizeAndConvertImage = async (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -187,7 +184,6 @@ export default function CreateBillModal({ setRefreshUI }) {
                 const canvas = document.createElement("canvas");
                 const ctx = canvas.getContext("2d");
 
-                // Set canvas size to a reasonable dimension (e.g., max 1200px width)
                 const maxWidth = 1200;
                 const scale = Math.min(1, maxWidth / img.width);
                 canvas.width = img.width * scale;
@@ -195,7 +191,6 @@ export default function CreateBillModal({ setRefreshUI }) {
 
                 if (ctx) {
                   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                  // Convert to JPEG with 80% quality
                   const optimizedBase64 = canvas.toDataURL("image/jpeg", 0.8);
                   resolve(optimizedBase64);
                 } else {
@@ -222,16 +217,16 @@ export default function CreateBillModal({ setRefreshUI }) {
         meterSrNo: router.query.meterNo,
         customerId: router.query.customerId,
         imageFile: imageBase64,
+        unitPrice: unitPrice,
       };
 
-      // Assuming you are sending this data to your backend
       await axiosClient.post("/api/bill", data);
       toast.success("Bill created successfully");
       setRefreshUI((prev) => !prev);
       setShowModal(false);
-      // Reset the form
       setFile(null);
       setScanResults(null);
+      setUnitPrice(35);
     } catch (error) {
       console.error("Error creating bill:", error);
       toast.error(error.response?.data?.message || "Something went wrong");
@@ -299,11 +294,35 @@ export default function CreateBillModal({ setRefreshUI }) {
             </div>
 
             {scanResults && (
-              <div className="mt-4">
-                <h3 className="font-medium">Scan Results</h3>
-                <p>Units Consumed: {scanResults.unitsConsumed}</p>
-                {/* <p>Total Bill: ${scanResults.totalBill.toFixed(2)}</p> */}
-                <p>Meter Serial No: {scanResults.meterSrNo}</p>
+              <div className="mt-4 space-y-4">
+                <h3 className="font-medium">Bill Details</h3>
+                <div className="grid gap-2">
+                  <div className="flex items-center justify-between">
+                    <span>Units Consumed:</span>
+                    <span>{scanResults.unitsConsumed}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Meter Serial No:</span>
+                    <span>{scanResults.meterSrNo}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Unit Price (Rs.):</span>
+                    <Input
+                      type="number"
+                      value={unitPrice}
+                      onChange={(e) => setUnitPrice(Number(e.target.value))}
+                      className="w-24"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between font-medium">
+                    <span>Total Bill:</span>
+                    <span>
+                      Rs. {(scanResults.unitsConsumed * unitPrice).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
           </div>

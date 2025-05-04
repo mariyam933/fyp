@@ -121,45 +121,199 @@ export const billsColumns = (options: getCol = {}): ColumnDef<any>[] => {
         const handleDownload = async () => {
           const doc = new jsPDF();
 
-          // Add title
-          doc.setFontSize(20);
-          doc.text("Electricity Bill", 105, 20, { align: "center" });
+          doc.setProperties({
+            title: `Bill ${row.original.meterSrNo}`,
+            subject: "Electricity Bill",
+            author: "NUST Electricity Billing System",
+          });
 
-          // Add bill details
-          doc.setFontSize(12);
-          doc.text(`Bill Serial Number: ${row.original.meterSrNo}`, 20, 40);
-          doc.text(`Units Consumed: ${row.original.unitsConsumed}`, 20, 50);
-          doc.text(`Total Amount: Rs. ${row.original.totalBill}`, 20, 60);
-          doc.text(`Status: ${row.original.status || "Pending"}`, 20, 70);
-
-          // Add date
-          doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 80);
-
-          // Add image if available
           if (row.original.imageUrl) {
             try {
-              // Add image title
-              doc.text("Meter Reading Image:", 20, 100);
+              doc.setFontSize(12);
+              doc.setFont("helvetica", "normal");
+              doc.text("Meter Reading:", 105, 20, { align: "center" });
 
-              // Load and add the image
               const img = new Image();
               img.src = row.original.imageUrl;
 
-              // Wait for image to load
               await new Promise((resolve) => {
                 img.onload = resolve;
               });
 
-              // Add image to PDF (scaled to fit)
-              const imgWidth = 100;
+              const imgWidth = 80; // Reduced width
               const imgHeight = (img.height * imgWidth) / img.width;
-              doc.addImage(img, "JPEG", 20, 110, imgWidth, imgHeight);
+              doc.addImage(img, "JPEG", 60, 25, imgWidth, imgHeight); // Centered and smaller
             } catch (error) {
               console.error("Error adding image to PDF:", error);
             }
           }
 
-          // Save the PDF
+          doc.setFontSize(24);
+          doc.text("Electricity Bill", 105, row.original.imageUrl ? 50 : 20, {
+            align: "center",
+          });
+          doc.setFontSize(12);
+          doc.text(
+            `Bill No: ${row.original.meterSrNo}`,
+            105,
+            row.original.imageUrl ? 60 : 30,
+            { align: "center" }
+          );
+
+          doc.setFontSize(14);
+          doc.text("Customer Details", 20, row.original.imageUrl ? 80 : 50);
+          doc.setFontSize(12);
+          doc.text(
+            `Name: ${row.original.customerId?.name || "N/A"}`,
+            20,
+            row.original.imageUrl ? 90 : 60
+          );
+          doc.text(
+            `Meter Serial Number: ${row.original.meterSrNo}`,
+            20,
+            row.original.imageUrl ? 100 : 70
+          );
+
+          doc.setFontSize(14);
+          doc.text("Consumption Details", 20, row.original.imageUrl ? 120 : 90);
+          doc.setFontSize(12);
+          doc.text(
+            `Total Units Consumed: ${row.original.unitsConsumed}`,
+            20,
+            row.original.imageUrl ? 130 : 100
+          );
+
+          doc.setFontSize(14);
+          doc.text(
+            "Bill Calculation Details",
+            20,
+            row.original.imageUrl ? 150 : 120
+          );
+
+          doc.setFontSize(12);
+          doc.setFont("helvetica", "bold");
+          doc.text("Component", 20, row.original.imageUrl ? 165 : 135);
+          doc.text("Amount (Rs.)", 150, row.original.imageUrl ? 165 : 135, {
+            align: "right",
+          });
+
+          doc.line(
+            20,
+            row.original.imageUrl ? 170 : 140,
+            190,
+            row.original.imageUrl ? 170 : 140
+          );
+
+          doc.setFont("helvetica", "normal");
+          let y = row.original.imageUrl ? 180 : 150;
+
+          const electricCost = row.original.unitsConsumed * 35;
+          doc.text("Electric Cost", 20, y);
+          doc.text(electricCost.toFixed(2), 150, y, { align: "right" });
+          y += 10;
+
+          const fc = row.original.unitsConsumed * 3.23;
+          doc.text("Fuel Charges (FC)", 20, y);
+          doc.text(fc.toFixed(2), 150, y, { align: "right" });
+          y += 10;
+
+          const qtrTax = row.original.unitsConsumed * 0.5;
+          doc.text("Quarterly Tax (QTR)", 20, y);
+          doc.text(qtrTax.toFixed(2), 150, y, { align: "right" });
+          y += 10;
+
+          const fpaRate = 0.1;
+          const fpa = row.original.unitsConsumed * fpaRate;
+          doc.text("Fuel Price Adjustment (FPA)", 20, y);
+          doc.text(fpa.toFixed(2), 150, y, { align: "right" });
+          y += 10;
+
+          const fixedCharges = 1000;
+          doc.text("Fixed Charges", 20, y);
+          doc.text(fixedCharges.toFixed(2), 150, y, { align: "right" });
+          y += 10;
+
+          const ptvFee = 35;
+          doc.text("PTV Fee", 20, y);
+          doc.text(ptvFee.toFixed(2), 150, y, { align: "right" });
+          y += 10;
+
+          const meterRent = 25;
+          doc.text("Meter Rent", 20, y);
+          doc.text(meterRent.toFixed(2), 150, y, { align: "right" });
+          y += 10;
+
+          const waterBill = 250;
+          doc.text("Water Bill", 20, y);
+          doc.text(waterBill.toFixed(2), 150, y, { align: "right" });
+          y += 10;
+
+          const subtotal =
+            electricCost +
+            fc +
+            qtrTax +
+            fpa +
+            fixedCharges +
+            ptvFee +
+            meterRent +
+            waterBill;
+          doc.setFont("helvetica", "bold");
+          doc.text("Subtotal", 20, y);
+          doc.text(subtotal.toFixed(2), 150, y, { align: "right" });
+          y += 10;
+
+          const gstBase = electricCost + fc + qtrTax;
+          const gst = gstBase * 0.18;
+          doc.text("GST (18%)", 20, y);
+          doc.text(gst.toFixed(2), 150, y, { align: "right" });
+          y += 10;
+
+          doc.line(20, y, 190, y);
+
+          const totalAmount = subtotal + gst;
+          doc.setFont("helvetica", "bold");
+          doc.text("Total Amount", 20, y + 10);
+          doc.text(totalAmount.toFixed(2), 150, y + 10, { align: "right" });
+
+          doc.setFont("helvetica", "normal");
+          doc.text(
+            `Billing Date: ${new Date(
+              row.original.createdAt
+            ).toLocaleDateString()}`,
+            20,
+            y + 30
+          );
+          doc.text(
+            `Due Date: ${new Date(row.original.dueDate).toLocaleDateString()}`,
+            20,
+            y + 40
+          );
+
+          doc.setFont("helvetica", "bold");
+          doc.text("Payment Instructions:", 20, y + 60);
+          doc.setFont("helvetica", "normal");
+          doc.text(
+            "1. Please pay the bill before the due date to avoid late payment charges.",
+            20,
+            y + 70
+          );
+          doc.text(
+            "2. Payment can be made through bank transfer or at our office.",
+            20,
+            y + 80
+          );
+          doc.text(
+            "3. For any queries, please contact our customer service.",
+            20,
+            y + 90
+          );
+
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.text("Thank you for your business!", 105, 280, {
+            align: "center",
+          });
+
           doc.save(`bill_${row.original.meterSrNo}.pdf`);
         };
 
