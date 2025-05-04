@@ -1,28 +1,28 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 
-import {
-  ColumnDef,
-} from "@tanstack/react-table"
+import { ColumnDef } from "@tanstack/react-table";
 
-import { ArrowUpDown, MoreHorizontal } from "lucide-react"
-import { useRouter } from "next/router"
-import { useState } from "react"
+import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import { useRouter } from "next/router";
+import { useState } from "react";
 // import UpdateCustomerModal from "./EditCustomerModal"
 // import ConfirmCustomerDeleteModal from "./ConfirmDeleteCustomer"
 
 interface getCol {
-  setRefreshUI?: any
+  setRefreshUI?: any;
 }
 
-export const billCustomerTableColumns = (options: getCol = {}): ColumnDef<any>[] => {
-  const { setRefreshUI } = options
+export const billCustomerTableColumns = (
+  options: getCol = {}
+): ColumnDef<any>[] => {
+  const { setRefreshUI } = options;
   return [
     {
       accessorKey: "name",
@@ -35,11 +35,13 @@ export const billCustomerTableColumns = (options: getCol = {}): ColumnDef<any>[]
             Full Name
             <ArrowUpDown />
           </Button>
-        )
+        );
       },
-      cell: ({ row }) => <div className="capitalize px-4">{row.getValue("name")}</div>,
+      cell: ({ row }) => (
+        <div className="capitalize px-4">{row.getValue("name")}</div>
+      ),
     },
-    
+
     // {
     //   accessorKey: "email",
     //   header: ({ column }) => {
@@ -67,27 +69,27 @@ export const billCustomerTableColumns = (options: getCol = {}): ColumnDef<any>[]
             Address
             <ArrowUpDown />
           </Button>
-        )
+        );
       },
       cell: ({ row }) => <div className="px-4">{row.getValue("address")}</div>,
     },
 
-     // meter no
-     {
-        accessorKey: "meterNo",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-              Meter No
-              <ArrowUpDown />
-            </Button>
-          )
-        },
-        cell: ({ row }) => <div className="px-4">{row.getValue("meterNo")}</div>,
+    // meter no
+    {
+      accessorKey: "meterNo",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Meter No
+            <ArrowUpDown />
+          </Button>
+        );
       },
+      cell: ({ row }) => <div className="px-4">{row.getValue("meterNo")}</div>,
+    },
     // // phone
     // {
     //   accessorKey: "phone",
@@ -104,7 +106,7 @@ export const billCustomerTableColumns = (options: getCol = {}): ColumnDef<any>[]
     //   },
     //   cell: ({ row }) => <div className="px-4">{row.getValue("phone")}</div>,
     // },
-   
+
     // {
     //   id: "actions",
     //   enableHiding: false,
@@ -138,5 +140,5 @@ export const billCustomerTableColumns = (options: getCol = {}): ColumnDef<any>[]
     //     )
     //   },
     // },
-  ]
-}
+  ];
+};

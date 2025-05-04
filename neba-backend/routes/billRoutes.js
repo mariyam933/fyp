@@ -10,7 +10,6 @@ router.get("/", billController.getBills);
 
 router.get("/prev/:customerId", billController.getPreviousMonthUnits);
 
-
 // Route to get bills by customer ID
 router.get("/:customerId", billController.getBillsByCustomerId);
 
