@@ -41,22 +41,21 @@ exports.createBill = async (req, res) => {
         .json({ message: "Current reading is less than previous reading" });
     }
 
-    // Get unit price from settings
     const settings = await Settings.findOne();
-    console.log("Settings found:", settings); // Debug log
+    console.log("Settings found:", settings);
 
     if (!settings) {
-      console.log("No settings found, creating default settings"); // Debug log
+      console.log("No settings found, creating default settings");
       const defaultSettings = await Settings.create({ unitPrice: 35 });
-      console.log("Default settings created:", defaultSettings); // Debug log
+      console.log("Default settings created:", defaultSettings);
     }
 
     const unitPrice = settings ? settings.unitPrice : 35;
-    console.log("Using unit price:", unitPrice); // Debug log
-    console.log("Units consumed:", unitsConsumed); // Debug log
+    console.log("Using unit price:", unitPrice);
+    console.log("Units consumed:", unitsConsumed);
 
     const totalBill = Number(unitsConsumed) * Number(unitPrice);
-    console.log("Total bill calculated:", totalBill); // Debug log
+    console.log("Total bill calculated:", totalBill);
 
     let imageUrl = null;
     if (imageFile) {
