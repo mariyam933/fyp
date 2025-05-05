@@ -1,11 +1,11 @@
 const Bill = require("../models/Bill");
 const User = require("../models/User");
-const Customer = require("../models/Customer"); // Ensure to import the Customer model
+const Customer = require("../models/Customer");
+const Settings = require("../models/Settings");
 const PDFDocument = require("pdfkit");
 const cloudinary = require("../config/cloudinaryConfig");
 const path = require("path");
 const fs = require("fs");
-const RateSettings = require("../models/RateSettings");
 
 exports.createBill = async (req, res) => {
   try {
@@ -41,10 +41,22 @@ exports.createBill = async (req, res) => {
         .json({ message: "Current reading is less than previous reading" });
     }
 
-    // Get current rate from settings
-    const rateSettings = await RateSettings.findOne().sort({ createdAt: -1 });
-    const ratePerUnit = rateSettings ? rateSettings.ratePerUnit : 35;
-    const totalBill = unitsConsumed * ratePerUnit;
+    // Get unit price from settings
+    const settings = await Settings.findOne();
+    console.log("Settings found:", settings); // Debug log
+
+    if (!settings) {
+      console.log("No settings found, creating default settings"); // Debug log
+      const defaultSettings = await Settings.create({ unitPrice: 35 });
+      console.log("Default settings created:", defaultSettings); // Debug log
+    }
+
+    const unitPrice = settings ? settings.unitPrice : 35;
+    console.log("Using unit price:", unitPrice); // Debug log
+    console.log("Units consumed:", unitsConsumed); // Debug log
+
+    const totalBill = Number(unitsConsumed) * Number(unitPrice);
+    console.log("Total bill calculated:", totalBill); // Debug log
 
     let imageUrl = null;
     if (imageFile) {
@@ -86,34 +98,6 @@ exports.createBill = async (req, res) => {
     });
   }
 };
-
-// exports.createBill = async (req, res) => {
-//   try {
-//     console.log(req.body , 'saddam');
-//     const { customerId, unitsConsumed, totalBill, meterSrNo } = req.body;
-//     console.log("The values",req.body)
-
-//     // Ensure the customer exists
-//     const customer = await User.findById(customerId);
-//     if (!customer) {
-//       return res.status(404).json({ message: "Customer not found" });
-//     }
-
-//     // Create a new Bill
-//     const newBill = new Bill({
-//       customerId,
-//       meterSrNo,
-//       unitsConsumed,
-//       totalBill
-//     });
-
-//     await newBill.save();
-//     return res.status(201).json(newBill);
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ message: "Error creating bill" });
-//   }
-// };
 
 // Get all bills
 exports.getBills = async (req, res) => {
@@ -269,54 +253,232 @@ exports.deleteBill = async (req, res) => {
   }
 };
 
-// Download bill as PDF
 exports.downloadBill = async (req, res) => {
   try {
     const { billId } = req.params;
 
-    // Find the bill
     const bill = await Bill.findById(billId).populate("customerId", "name");
 
     if (!bill) {
       return res.status(404).json({ message: "Bill not found" });
     }
 
-    // Create a new PDF document
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({
+      size: "A4",
+      margin: 50,
+    });
 
-    // Set response headers
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
       `attachment; filename=bill_${bill.meterSrNo}.pdf`
     );
 
-    // Pipe the PDF to the response
     doc.pipe(res);
 
-    // Add content to the PDF
-    doc.fontSize(20).text("Electricity Bill", { align: "center" });
-    doc.moveDown();
+    // Add signature image
+    doc.image("public/images/01.png", 50, 50, { width: 100 });
 
-    // Bill Details
-    doc.fontSize(12);
-    doc.text(`Customer Name: ${bill.customerId.name}`);
-    doc.text(`Meter Serial Number: ${bill.meterSrNo}`);
-    doc.moveDown();
+    // Add meter image on the right
+    if (bill.imageUrl) {
+      doc.image(bill.imageUrl, 400, 50, { width: 150 });
+    }
 
-    // Consumption Details
-    doc.text("Consumption Details:");
-    doc.text(`Units Consumed: ${bill.unitsConsumed}`);
-    doc.text(`Total Amount: Rs. ${bill.totalBill}`);
-    doc.moveDown();
+    // Add bill header
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(24)
+      .fillColor("#0000FF") // Blue color
+      .text("WATER BILL", { align: "center" })
+      .moveDown();
 
-    // Billing Date
-    doc.text(`Billing Date: ${new Date(bill.createdAt).toLocaleDateString()}`);
+    // Create a table for bill details
+    const tableTop = 200;
+    const tableLeft = 50;
+    const tableWidth = 500;
+    const rowHeight = 30;
+    const cellPadding = 5;
 
-    // Finalize the PDF
+    // Helper function to draw table cell
+    const drawCell = (text, x, y, width, align = "left") => {
+      doc
+        .font("Helvetica")
+        .fontSize(12)
+        .fillColor("#0000FF") // Blue color
+        .text(text, x + cellPadding, y + cellPadding, {
+          width: width - 2 * cellPadding,
+          align: align,
+        });
+    };
+
+    // Draw table header
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(12)
+      .fillColor("#FF0000") // Red color
+      .text("Bill Details", tableLeft, tableTop)
+      .moveDown();
+
+    // Draw table rows
+    const rows = [
+      ["Bill Number:", bill.billNumber || bill._id],
+      ["Customer Name:", bill.customerId.name],
+      ["Meter Serial No:", bill.meterSrNo],
+      ["Previous Reading:", bill.previousReading || "0"],
+      ["Current Reading:", bill.currentReading || bill.unitsConsumed],
+      ["Units Consumed:", bill.unitsConsumed],
+      ["Unit Price:", `Rs. ${bill.unitPrice || 35}`],
+      ["Total Amount:", `Rs. ${bill.totalBill}`],
+      ["Due Date:", new Date(bill.dueDate || new Date()).toLocaleDateString()],
+    ];
+
+    rows.forEach((row, index) => {
+      const y = tableTop + (index + 1) * rowHeight;
+
+      // Draw cell borders
+      doc
+        .strokeColor("#0000FF") // Blue color
+        .lineWidth(1)
+        .rect(tableLeft, y, tableWidth, rowHeight)
+        .stroke();
+
+      // Draw cell content
+      drawCell(row[0], tableLeft, y, 200);
+      drawCell(row[1], tableLeft + 200, y, 300);
+    });
+
+    // Add payment status
+    const statusY = tableTop + (rows.length + 1) * rowHeight;
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(14)
+      .fillColor(bill.isPaid ? "#008000" : "#FF0000") // Green if paid, Red if unpaid
+      .text(`Status: ${bill.isPaid ? "PAID" : "UNPAID"}`, tableLeft, statusY, {
+        align: "center",
+        width: tableWidth,
+      });
+
+    // Add footer with date
+    const footerY = 700;
+    doc
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor("#0000FF") // Blue color
+      .text(
+        `Generated on: ${new Date().toLocaleDateString()}`,
+        tableLeft,
+        footerY,
+        { align: "center", width: tableWidth }
+      );
+
     doc.end();
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Error generating PDF" });
   }
+};
+
+const generateBillPDF = async (bill, customer) => {
+  const doc = new PDFDocument({
+    size: "A4",
+    margin: 50,
+  });
+
+  // Add signature image
+  doc.image("public/images/01.png", 50, 50, { width: 100 });
+
+  // Add meter image on the right
+  if (bill.imageFile) {
+    const imagePath = path.join(process.cwd(), "uploads", bill.imageFile);
+    doc.image(imagePath, 400, 50, { width: 150 });
+  }
+
+  // Add bill header
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(24)
+    .fillColor("#0000FF") // Blue color
+    .text("WATER BILL", { align: "center" })
+    .moveDown();
+
+  // Create a table for bill details
+  const tableTop = 200;
+  const tableLeft = 50;
+  const tableWidth = 500;
+  const rowHeight = 30;
+  const cellPadding = 5;
+
+  // Helper function to draw table cell
+  const drawCell = (text, x, y, width, align = "left") => {
+    doc
+      .font("Helvetica")
+      .fontSize(12)
+      .fillColor("#0000FF") // Blue color
+      .text(text, x + cellPadding, y + cellPadding, {
+        width: width - 2 * cellPadding,
+        align: align,
+      });
+  };
+
+  // Draw table header
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(12)
+    .fillColor("#FF0000") // Red color
+    .text("Bill Details", tableLeft, tableTop)
+    .moveDown();
+
+  // Draw table rows
+  const rows = [
+    ["Bill Number:", bill.billNumber],
+    ["Customer Name:", customer.name],
+    ["Meter Serial No:", bill.meterSrNo],
+    ["Previous Reading:", bill.previousReading],
+    ["Current Reading:", bill.currentReading],
+    ["Units Consumed:", bill.unitsConsumed],
+    ["Unit Price:", `Rs. ${bill.unitPrice}`],
+    ["Total Amount:", `Rs. ${bill.totalBill}`],
+    ["Due Date:", new Date(bill.dueDate).toLocaleDateString()],
+  ];
+
+  rows.forEach((row, index) => {
+    const y = tableTop + (index + 1) * rowHeight;
+
+    // Draw cell borders
+    doc
+      .strokeColor("#0000FF") // Blue color
+      .lineWidth(1)
+      .rect(tableLeft, y, tableWidth, rowHeight)
+      .stroke();
+
+    // Draw cell content
+    drawCell(row[0], tableLeft, y, 200);
+    drawCell(row[1], tableLeft + 200, y, 300);
+  });
+
+  // Add payment status
+  const statusY = tableTop + (rows.length + 1) * rowHeight;
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(14)
+    .fillColor(bill.isPaid ? "#008000" : "#FF0000") // Green if paid, Red if unpaid
+    .text(`Status: ${bill.isPaid ? "PAID" : "UNPAID"}`, tableLeft, statusY, {
+      align: "center",
+      width: tableWidth,
+    });
+
+  // Add footer with date
+  const footerY = 700;
+  doc
+    .font("Helvetica")
+    .fontSize(10)
+    .fillColor("#0000FF") // Blue color
+    .text(
+      `Generated on: ${new Date().toLocaleDateString()}`,
+      tableLeft,
+      footerY,
+      { align: "center", width: tableWidth }
+    );
+
+  return doc;
 };

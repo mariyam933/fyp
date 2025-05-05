@@ -17,13 +17,11 @@ const corsOptions = {
 const app = express();
 app.use(cors(corsOptions));
 
-// Increase payload size limit
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 app.use(cookieParser());
 
-// test route
 app.get("/", (req, res) => {
   res.send("API running");
 });
@@ -33,8 +31,8 @@ app.use("/api/customer", require("./routes/customerRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/meter-reader", require("./routes/meterReaderRoutes"));
 app.use("/api/bill", require("./routes/billRoutes"));
+app.use("/api/settings", require("./routes/settingsRoutes"));
 app.use("/api/meter-readings", require("./routes/meterRoutes"));
-app.use("/api/rate-settings", require("./routes/rateSettingsRoutes"));
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
