@@ -156,102 +156,104 @@ export const billsColumns = (options: getCol = {}): ColumnDef<any>[] => {
             }
           }
 
-          doc.setFontSize(24);
+          doc.setFontSize(20);
           doc.text("Electricity Bill", 20, row.original.imageUrl ? 50 : 45);
-          doc.setFontSize(12);
+          doc.setFontSize(10);
           doc.text(
             `Bill No: ${row.original.meterSrNo}`,
             20,
             row.original.imageUrl ? 60 : 55
           );
 
-          doc.setFontSize(14);
-          doc.text("Customer Details", 20, row.original.imageUrl ? 80 : 50);
           doc.setFontSize(12);
+          doc.text("Customer Details", 20, row.original.imageUrl ? 70 : 60);
+          doc.setFontSize(10);
           doc.text(
             `Name: ${row.original.customerId.name}`,
             20,
-            row.original.imageUrl ? 90 : 60
+            row.original.imageUrl ? 80 : 70
           );
           doc.text(
             `Meter Serial Number: ${row.original.meterSrNo}`,
             20,
-            row.original.imageUrl ? 100 : 70
+            row.original.imageUrl ? 90 : 80
           );
 
-          doc.setFontSize(14);
-          doc.text("Consumption Details", 20, row.original.imageUrl ? 120 : 90);
           doc.setFontSize(12);
+          doc.text("Consumption Details", 20, row.original.imageUrl ? 100 : 90);
+          doc.setFontSize(10);
           doc.text(
             `Total Units Consumed: ${row.original.unitsConsumed}`,
             20,
-            row.original.imageUrl ? 130 : 100
-          );
-
-          doc.setFontSize(14);
-          doc.text(
-            "Bill Calculation Details",
-            20,
-            row.original.imageUrl ? 150 : 120
+            row.original.imageUrl ? 110 : 100
           );
 
           doc.setFontSize(12);
+          doc.text(
+            "Bill Calculation Details",
+            20,
+            row.original.imageUrl ? 120 : 110
+          );
+
+          doc.setFontSize(10);
           doc.setFont("helvetica", "bold");
-          doc.text("Component", 20, row.original.imageUrl ? 165 : 135);
-          doc.text("Amount (Rs.)", 150, row.original.imageUrl ? 165 : 135, {
+          doc.text("Component", 20, row.original.imageUrl ? 130 : 120);
+          doc.text("Amount (Rs.)", 150, row.original.imageUrl ? 130 : 120, {
             align: "right",
           });
 
           doc.line(
             20,
-            row.original.imageUrl ? 170 : 140,
+            row.original.imageUrl ? 135 : 125,
             190,
-            row.original.imageUrl ? 170 : 140
+            row.original.imageUrl ? 135 : 125
           );
 
           doc.setFont("helvetica", "normal");
-          let y = row.original.imageUrl ? 180 : 150;
+          let y = row.original.imageUrl ? 145 : 135;
+
+          const lineSpacing = 8;
 
           const electricCost = row.original.unitsConsumed * 35;
           doc.text("Electric Cost", 20, y);
           doc.text(electricCost.toFixed(2), 150, y, { align: "right" });
-          y += 10;
+          y += lineSpacing;
 
           const fc = row.original.unitsConsumed * 3.23;
           doc.text("Fuel Charges (FC)", 20, y);
           doc.text(fc.toFixed(2), 150, y, { align: "right" });
-          y += 10;
+          y += lineSpacing;
 
           const qtrTax = row.original.unitsConsumed * 0.5;
           doc.text("Quarterly Tax (QTR)", 20, y);
           doc.text(qtrTax.toFixed(2), 150, y, { align: "right" });
-          y += 10;
+          y += lineSpacing;
 
           const fpaRate = 0.1;
           const fpa = row.original.unitsConsumed * fpaRate;
           doc.text("Fuel Price Adjustment (FPA)", 20, y);
           doc.text(fpa.toFixed(2), 150, y, { align: "right" });
-          y += 10;
+          y += lineSpacing;
 
           const fixedCharges = 1000;
           doc.text("Fixed Charges", 20, y);
           doc.text(fixedCharges.toFixed(2), 150, y, { align: "right" });
-          y += 10;
+          y += lineSpacing;
 
           const ptvFee = 35;
           doc.text("PTV Fee", 20, y);
           doc.text(ptvFee.toFixed(2), 150, y, { align: "right" });
-          y += 10;
+          y += lineSpacing;
 
           const meterRent = 25;
           doc.text("Meter Rent", 20, y);
           doc.text(meterRent.toFixed(2), 150, y, { align: "right" });
-          y += 10;
+          y += lineSpacing;
 
           const waterBill = 250;
           doc.text("Water Bill", 20, y);
           doc.text(waterBill.toFixed(2), 150, y, { align: "right" });
-          y += 10;
+          y += lineSpacing;
 
           const subtotal =
             electricCost +
@@ -265,53 +267,52 @@ export const billsColumns = (options: getCol = {}): ColumnDef<any>[] => {
           doc.setFont("helvetica", "bold");
           doc.text("Subtotal", 20, y);
           doc.text(subtotal.toFixed(2), 150, y, { align: "right" });
-          y += 10;
+          y += lineSpacing;
 
           const gstBase = electricCost + fc + qtrTax;
           const gst = gstBase * 0.18;
           doc.text("GST (18%)", 20, y);
           doc.text(gst.toFixed(2), 150, y, { align: "right" });
-          y += 10;
+          y += lineSpacing;
 
           doc.line(20, y, 190, y);
 
           const totalAmount = subtotal + gst;
           doc.setFont("helvetica", "bold");
-          doc.text("Total Amount", 20, y + 10);
-          doc.text(totalAmount.toFixed(2), 150, y + 10, { align: "right" });
+          doc.text("Total Amount", 20, y + 5);
+          doc.text(totalAmount.toFixed(2), 150, y + 5, { align: "right" });
 
           doc.setFont("helvetica", "normal");
           doc.text(
-            `Billing Date: ${new Date(
-              row.original.createdAt
-            ).toLocaleDateString()}`,
+            `Billing Date: ${new Date().toLocaleDateString()}`,
             20,
-            y + 30
+            y + 15
           );
           doc.text(
-            `Due Date: ${new Date(row.original.dueDate).toLocaleDateString()}`,
+            `Due Date: ${new Date(
+              Date.now() + 10 * 24 * 60 * 60 * 1000
+            ).toLocaleDateString()}`,
             20,
-            y + 40
+            y + 23
           );
 
-          // Adjust text positions
           doc.setFont("helvetica", "bold");
-          doc.text("Payment Instructions:", 20, y + 60);
+          doc.text("Payment Instructions:", 20, y + 35);
           doc.setFont("helvetica", "normal");
           doc.text(
             "1. Please pay the bill before the due date to avoid late payment charges.",
             20,
-            y + 70
+            y + 43
           );
           doc.text(
             "2. Payment can be made through bank transfer or at our office.",
             20,
-            y + 80
+            y + 51
           );
           doc.text(
             "3. For any queries, please contact our customer service.",
             20,
-            y + 90
+            y + 59
           );
 
           doc.save(`bill_${row.original.meterSrNo}.pdf`);
