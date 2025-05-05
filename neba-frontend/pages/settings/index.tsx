@@ -1,79 +1,83 @@
-import React from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/loader";
+import { axiosClient } from "@/utils/axiosClient";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function Settings() {
+  const [unitPrice, setUnitPrice] = useState<number>(35);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosClient.get("/api/settings");
+      setUnitPrice(response.data.unitPrice);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      toast.error("Failed to load settings");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await axiosClient.put("/api/settings/unit-price", { unitPrice });
+      toast.success("Settings updated successfully");
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      toast.error("Failed to update settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner size="large" show={loading} />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen py-8">
-      <div className=" bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-semibold text-gray-800 mb-4">Settings</h1>
-        <p className="text-gray-600 mb-6">Customize your preferences below.</p>
-        <div className="space-y-6">
-          {/* Profile Settings */}
-          <div className="border-b pb-6">
-            <h2 className="text-lg font-medium text-gray-700">Profile Settings</h2>
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-600">Full Name</label>
-                <input
-                  type="text"
-                  placeholder="John Doe"
-                  className="w-full mt-1 px-4 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600">Email</label>
-                <input
-                  type="email"
-                  placeholder="john.doe@example.com"
-                  className="w-full mt-1 px-4 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-          </div>
+    <div className="container mx-auto py-8">
+      <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
-          {/* Account Settings */}
-          <div className="border-b pb-6">
-            <h2 className="text-lg font-medium text-gray-700">Account Settings</h2>
-            <div className="mt-4 space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700">Two-Factor Authentication</span>
-                <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                  Enable
-                </button>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700">Change Password</span>
-                <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
-                  Update
-                </button>
-              </div>
-            </div>
-          </div>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-4">Unit Price Settings</h2>
 
-          {/* Notification Settings */}
+        <div className="space-y-4">
           <div>
-            <h2 className="text-lg font-medium text-gray-700">Notification Settings</h2>
-            <div className="mt-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="text-gray-700">Email Notifications</label>
-                <input
-                  type="checkbox"
-                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <label className="text-gray-700">Push Notifications</label>
-                <input
-                  type="checkbox"
-                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-              </div>
-            </div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Unit Price (Rs.)
+            </label>
+            <Input
+              type="number"
+              value={unitPrice}
+              onChange={(e) => setUnitPrice(Number(e.target.value))}
+              min="0"
+              step="0.01"
+              className="w-48"
+            />
           </div>
-        </div>
-        <div className="mt-6 flex justify-end">
-          <button className="bg-blue-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-blue-600">
+
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2"
+          >
+            <Spinner size="xsmall" show={saving} className="text-white" />
             Save Changes
-          </button>
+          </Button>
         </div>
       </div>
     </div>

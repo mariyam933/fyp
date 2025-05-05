@@ -127,11 +127,19 @@ export const billsColumns = (options: getCol = {}): ColumnDef<any>[] => {
             author: "NUST Electricity Billing System",
           });
 
+          // Add NUST signature image
+          const nustSignature = new Image();
+          nustSignature.src = "/asset/images/NUST-Signature-01.png";
+          await new Promise((resolve) => {
+            nustSignature.onload = resolve;
+          });
+          doc.addImage(nustSignature, "PNG", 20, 10, 60, 30);
+
           if (row.original.imageUrl) {
             try {
               doc.setFontSize(12);
               doc.setFont("helvetica", "normal");
-              doc.text("Meter Reading:", 105, 20, { align: "center" });
+              doc.text("Meter Reading:", 150, 20, { align: "right" });
 
               const img = new Image();
               img.src = row.original.imageUrl;
@@ -140,31 +148,28 @@ export const billsColumns = (options: getCol = {}): ColumnDef<any>[] => {
                 img.onload = resolve;
               });
 
-              const imgWidth = 80; // Reduced width
+              const imgWidth = 80;
               const imgHeight = (img.height * imgWidth) / img.width;
-              doc.addImage(img, "JPEG", 60, 25, imgWidth, imgHeight); // Centered and smaller
+              doc.addImage(img, "JPEG", 110, 25, imgWidth, imgHeight);
             } catch (error) {
               console.error("Error adding image to PDF:", error);
             }
           }
 
           doc.setFontSize(24);
-          doc.text("Electricity Bill", 105, row.original.imageUrl ? 50 : 20, {
-            align: "center",
-          });
+          doc.text("Electricity Bill", 20, row.original.imageUrl ? 50 : 45);
           doc.setFontSize(12);
           doc.text(
             `Bill No: ${row.original.meterSrNo}`,
-            105,
-            row.original.imageUrl ? 60 : 30,
-            { align: "center" }
+            20,
+            row.original.imageUrl ? 60 : 55
           );
 
           doc.setFontSize(14);
           doc.text("Customer Details", 20, row.original.imageUrl ? 80 : 50);
           doc.setFontSize(12);
           doc.text(
-            `Name: ${row.original.customerId?.name || "N/A"}`,
+            `Name: ${row.original.customerId.name}`,
             20,
             row.original.imageUrl ? 90 : 60
           );
@@ -289,6 +294,7 @@ export const billsColumns = (options: getCol = {}): ColumnDef<any>[] => {
             y + 40
           );
 
+          // Adjust text positions
           doc.setFont("helvetica", "bold");
           doc.text("Payment Instructions:", 20, y + 60);
           doc.setFont("helvetica", "normal");
@@ -307,12 +313,6 @@ export const billsColumns = (options: getCol = {}): ColumnDef<any>[] => {
             20,
             y + 90
           );
-
-          doc.setFontSize(10);
-          doc.setFont("helvetica", "normal");
-          doc.text("Thank you for your business!", 105, 280, {
-            align: "center",
-          });
 
           doc.save(`bill_${row.original.meterSrNo}.pdf`);
         };

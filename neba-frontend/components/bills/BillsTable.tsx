@@ -1,4 +1,4 @@
-import * as React from "react"
+import * as React from "react";
 import {
   SortingState,
   flexRender,
@@ -7,10 +7,10 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -18,32 +18,35 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
-import { Spinner } from "@/components/ui/loader"
-import { useRouter } from "next/router"
-import CreateCustomerModal from "./CreateBillModal"
-import { billsColumns } from "./bills-columns"
-import CreateBillModal from "./CreateBillModal"
-import CheckBillModal from "./CheckBillModal"
+import { Spinner } from "@/components/ui/loader";
+import { useRouter } from "next/router";
+import CreateCustomerModal from "./CreateBillModal";
+import { billsColumns } from "./bills-columns";
+import CreateBillModal from "./CreateBillModal";
+import CheckBillModal from "./CheckBillModal";
 
-import { useAuth } from "@/context/auth"
-import { Check } from "lucide-react"
+import { useAuth } from "@/context/auth";
+import { Check } from "lucide-react";
 
 interface DataTableDemoProps {
-  tabledata: any[],
-  loading?: boolean,
-  setRefreshUI: React.Dispatch<React.SetStateAction<boolean>>
+  tabledata: any[];
+  loading?: boolean;
+  setRefreshUI: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function BillsTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
+export default function BillsTable({
+  tabledata,
+  loading,
+  setRefreshUI,
+}: DataTableDemoProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-    const auth=useAuth();
-    const userRole=Number(auth?.user?.role);
+  const auth = useAuth();
+  const userRole = Number(auth?.user?.role);
 
-  const router = useRouter()
+  const router = useRouter();
   const { meterNo } = router.query;
-
 
   const table = useReactTable({
     data: tabledata || [],
@@ -56,44 +59,49 @@ export default function BillsTable({ tabledata, loading, setRefreshUI }: DataTab
     state: {
       sorting,
     },
-  })
+  });
 
   // Define max number of page buttons to show
-  const maxPageButtons = 5
+  const maxPageButtons = 5;
 
   // Helper function to determine which page buttons to show
   const getPageButtons = () => {
-    const pageIndex = table.getState().pagination.pageIndex
-    const pageCount = table.getPageCount()
-    let startPage = Math.max(pageIndex - Math.floor(maxPageButtons / 2), 0)
-    let endPage = startPage + maxPageButtons - 1
+    const pageIndex = table.getState().pagination.pageIndex;
+    const pageCount = table.getPageCount();
+    let startPage = Math.max(pageIndex - Math.floor(maxPageButtons / 2), 0);
+    let endPage = startPage + maxPageButtons - 1;
 
     if (endPage >= pageCount) {
-      endPage = pageCount - 1
-      startPage = Math.max(endPage - maxPageButtons + 1, 0)
+      endPage = pageCount - 1;
+      startPage = Math.max(endPage - maxPageButtons + 1, 0);
     }
 
-    const pages = [] as any[]
+    const pages = [] as any[];
     for (let i = startPage; i <= endPage; i++) {
-      pages.push(i)
+      pages.push(i);
     }
-    return pages
-  }
+    return pages;
+  };
 
   return (
     <div className="w-full">
-      <h1 className='text-xl text-gray-700 font-semibold'>All Bills</h1>
+      <h1 className="text-xl text-gray-700 font-semibold">All Bills</h1>
       <div className="flex items-center py-4">
         <Input
           placeholder="Search bills by Sr No..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          value={
+            (table.getColumn("meterSrNo")?.getFilterValue() as string) ?? ""
+          }
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn("meterSrNo")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
-       {userRole===2?<CheckBillModal setRefreshUI={setRefreshUI}></CheckBillModal>: <CreateBillModal setRefreshUI={setRefreshUI}/>}
-       {/* <CheckBillModal setRefreshUI={setRefreshUI}></CheckBillModal> */}
+        {userRole === 2 ? (
+          <CheckBillModal setRefreshUI={setRefreshUI}></CheckBillModal>
+        ) : (
+          <CreateBillModal setRefreshUI={setRefreshUI} />
+        )}
       </div>
       <div className="rounded-md border">
         <Table>
@@ -105,86 +113,82 @@ export default function BillsTable({ tabledata, loading, setRefreshUI }: DataTab
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {loading ?
+            {loading ? (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
                   <Spinner size="small" show={loading} />
                 </TableCell>
               </TableRow>
-              :
-              table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
                 </TableRow>
-              )}
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
-      {tabledata?.length > 0 &&
-        <div className="flex items-center">
-          <div className="text-sm text-gray-600 ml-1">
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
-          </div>
-          <div className="flex items-center ml-auto justify-end space-x-2 py-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              First
-            </Button>
-            {getPageButtons().map((page) => (
-              <Button
-                key={page}
-                variant={table.getState().pagination.pageIndex === page ? "default" : "outline"}
-                size="sm"
-                onClick={() => table.setPageIndex(page)}
-              >
-                {page + 1}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-            >
-              Last
-            </Button>
-          </div>
+      <div className="flex items-center">
+        <div className="text-sm text-gray-600 ml-1">
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {table.getPageCount()}
         </div>
-      }
+        <div className="flex items-center ml-auto justify-end space-x-2 py-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.setPageIndex(0)}
+            disabled={!table.getCanPreviousPage()}
+          >
+            First
+          </Button>
+          {getPageButtons().map((page) => (
+            <Button
+              key={page}
+              variant={
+                table.getState().pagination.pageIndex === page
+                  ? "default"
+                  : "outline"
+              }
+              size="sm"
+              onClick={() => table.setPageIndex(page)}
+            >
+              {page + 1}
+            </Button>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={!table.getCanNextPage()}
+          >
+            Last
+          </Button>
+        </div>
+      </div>
     </div>
-  )
+  );
 }

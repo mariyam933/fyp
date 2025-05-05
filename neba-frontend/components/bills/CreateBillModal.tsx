@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/loader";
 import { axiosClient } from "@/utils/axiosClient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import UploadImage from "./UploadImage";
 import { useRouter } from "next/router";
@@ -21,10 +21,23 @@ export default function CreateBillModal({ setRefreshUI }) {
   const [loading, setLoading] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
   const [scanResults, setScanResults] = useState<any>(null);
-  const [unitPrice, setUnitPrice] = useState<number>(35); // Default unit price
+  const [unitPrice, setUnitPrice] = useState<number>(35);
 
   const router = useRouter();
-  console.log("router", router.query.customerId);
+
+  useEffect(() => {
+    fetchUnitPrice();
+  }, []);
+
+  const fetchUnitPrice = async () => {
+    try {
+      const response = await axiosClient.get("/api/settings");
+      setUnitPrice(response.data.unitPrice);
+    } catch (error) {
+      console.error("Error fetching unit price:", error);
+      toast.error("Failed to load unit price");
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -294,33 +307,100 @@ export default function CreateBillModal({ setRefreshUI }) {
             </div>
 
             {scanResults && (
-              <div className="mt-4 space-y-4">
-                <h3 className="font-medium">Bill Details</h3>
-                <div className="grid gap-2">
-                  <div className="flex items-center justify-between">
-                    <span>Units Consumed:</span>
-                    <span>{scanResults.unitsConsumed}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Meter Serial No:</span>
-                    <span>{scanResults.meterSrNo}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Unit Price (Rs.):</span>
-                    <Input
-                      type="number"
-                      value={unitPrice}
-                      onChange={(e) => setUnitPrice(Number(e.target.value))}
-                      className="w-24"
-                      min="0"
-                      step="0.01"
+              <div className="mt-4 p-4 border rounded-lg bg-white">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-24 h-24">
+                    <img
+                      src="/images/01.png"
+                      alt="Signature"
+                      className="w-full h-full object-contain"
                     />
                   </div>
-                  <div className="flex items-center justify-between font-medium">
-                    <span>Total Bill:</span>
-                    <span>
-                      Rs. {(scanResults.unitsConsumed * unitPrice).toFixed(2)}
-                    </span>
+                  {file && (
+                    <div className="w-32 h-32">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt="Meter Reading"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <h2 className="text-2xl font-bold text-blue-600 text-center mb-4">
+                  WATER BILL
+                </h2>
+
+                <div className="space-y-4">
+                  <div className="border border-blue-600 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-red-600 mb-3">
+                      Bill Details
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <p className="text-blue-600">
+                          <span className="font-semibold">Bill Number:</span>{" "}
+                          {scanResults.billNumber || scanResults._id}
+                        </p>
+                        <p className="text-blue-600">
+                          <span className="font-semibold">Customer Name:</span>{" "}
+                          {scanResults.customerName}
+                        </p>
+                        <p className="text-blue-600">
+                          <span className="font-semibold">
+                            Meter Serial No:
+                          </span>{" "}
+                          {scanResults.meterSrNo}
+                        </p>
+                        <p className="text-blue-600">
+                          <span className="font-semibold">
+                            Previous Reading:
+                          </span>{" "}
+                          {scanResults.previousReading || "0"}
+                        </p>
+                        <p className="text-blue-600">
+                          <span className="font-semibold">
+                            Current Reading:
+                          </span>{" "}
+                          {scanResults.currentReading ||
+                            scanResults.unitsConsumed}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-blue-600">
+                          <span className="font-semibold">Units Consumed:</span>{" "}
+                          {scanResults.unitsConsumed}
+                        </p>
+                        <p className="text-blue-600">
+                          <span className="font-semibold">Unit Price:</span> Rs.{" "}
+                          {scanResults.unitPrice || 35}
+                        </p>
+                        <p className="text-blue-600">
+                          <span className="font-semibold">Total Amount:</span>{" "}
+                          Rs. {scanResults.totalBill}
+                        </p>
+                        <p className="text-blue-600">
+                          <span className="font-semibold">Due Date:</span>{" "}
+                          {new Date(
+                            scanResults.dueDate || new Date()
+                          ).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-center">
+                    <p
+                      className={`text-lg font-bold ${
+                        scanResults.isPaid ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      Status: {scanResults.isPaid ? "PAID" : "UNPAID"}
+                    </p>
+                  </div>
+
+                  <div className="text-center text-sm text-blue-600">
+                    Generated on: {new Date().toLocaleDateString()}
                   </div>
                 </div>
               </div>
