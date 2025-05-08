@@ -12,6 +12,14 @@ const BillSchema = new Schema({
     required: true,
   },
   // Original fields
+  currentReading: {
+    type: Number,
+    required: true,
+  },
+  previousReading: {
+    type: Number,
+    required: true,
+  },
   unitsConsumed: {
     type: Number,
     required: true,

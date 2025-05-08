@@ -5,7 +5,7 @@ const settingsController = require("../controllers/settingsController");
 // Get current settings
 router.get("/", settingsController.getSettings);
 
-// Update unit price
-router.put("/unit-price", settingsController.updateUnitPrice);
+// Update settings
+router.put("/", settingsController.updateSettings);
 
 module.exports = router;

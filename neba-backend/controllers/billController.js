@@ -9,14 +9,20 @@ const fs = require("fs");
 
 exports.createBill = async (req, res) => {
   try {
-    console.log("Request body:", req.body);
-    const { customerId, meterSrNo, currentReading, imageFile } = req.body;
+    console.log("Request body received:", req.body);
+    const {
+      customerId,
+      meterSrNo,
+      currentReading,
+      previousReading,
+      unitsConsumed,
+      totalBill,
+      imageFile,
+      unitPrice,
+    } = req.body;
 
-    if (
-      !customerId ||
-      currentReading == null ||
-      isNaN(Number(currentReading))
-    ) {
+    if (!customerId || !currentReading || isNaN(Number(currentReading))) {
+      console.log("Validation failed:", { customerId, currentReading });
       return res
         .status(400)
         .json({ message: "Invalid customerId or currentReading" });
@@ -27,36 +33,36 @@ exports.createBill = async (req, res) => {
       return res.status(404).json({ message: "Customer not found" });
     }
 
-    const previousBill = await Bill.findOne({ customerId })
-      .sort({ createdAt: -1 })
-      .limit(1);
+    // If previousReading is not provided, get it from the latest bill
+    let prevReading = previousReading;
+    if (!prevReading) {
+      const previousBill = await Bill.findOne({ customerId })
+        .sort({ createdAt: -1 })
+        .limit(1);
+      prevReading = previousBill ? Number(previousBill.currentReading) : 0;
+    }
 
-    const prevReading = previousBill ? Number(previousBill.unitsConsumed) : 0;
+    console.log("Previous reading:", prevReading);
 
-    const unitsConsumed = Number(currentReading) - prevReading;
+    // Calculate units consumed
+    const calculatedUnitsConsumed =
+      Number(currentReading) - Number(prevReading);
+    console.log("Calculated units consumed:", calculatedUnitsConsumed);
 
-    if (unitsConsumed < 0) {
+    if (calculatedUnitsConsumed < 0) {
       return res
         .status(400)
         .json({ message: "Current reading is less than previous reading" });
     }
 
-    // Get unit price from settings
+    // Get unit price from settings or use the one from request
     const settings = await Settings.findOne();
-    console.log("Settings found:", settings); // Debug log
+    const finalUnitPrice = unitPrice || (settings ? settings.unitPrice : 35);
+    console.log("Final unit price:", finalUnitPrice);
 
-    if (!settings) {
-      console.log("No settings found, creating default settings"); // Debug log
-      const defaultSettings = await Settings.create({ unitPrice: 35 });
-      console.log("Default settings created:", defaultSettings); // Debug log
-    }
-
-    const unitPrice = settings ? settings.unitPrice : 35;
-    console.log("Using unit price:", unitPrice); // Debug log
-    console.log("Units consumed:", unitsConsumed); // Debug log
-
-    const totalBill = Number(unitsConsumed) * Number(unitPrice);
-    console.log("Total bill calculated:", totalBill); // Debug log
+    // Calculate total bill
+    const finalTotalBill = calculatedUnitsConsumed * finalUnitPrice;
+    console.log("Final total bill:", finalTotalBill);
 
     let imageUrl = null;
     if (imageFile) {
@@ -82,13 +88,18 @@ exports.createBill = async (req, res) => {
     const newBill = new Bill({
       customerId,
       meterSrNo,
-      unitsConsumed,
-      totalBill,
+      currentReading: Number(currentReading),
+      previousReading: Number(prevReading),
+      unitsConsumed: calculatedUnitsConsumed,
+      totalBill: finalTotalBill,
+      unitPrice: finalUnitPrice,
       imageUrl,
       isOcrProcessed: true,
     });
 
+    console.log("Saving bill to database:", newBill);
     await newBill.save();
+    console.log("Bill saved successfully");
     return res.status(201).json(newBill);
   } catch (error) {
     console.error("Error in createBill:", error);
@@ -139,6 +150,7 @@ exports.getBillsByCustomerId = async (req, res) => {
 exports.getPreviousMonthUnits = async (req, res) => {
   try {
     const { customerId } = req.params;
+    console.log("Getting previous month units for customer:", customerId);
 
     // Ensure customerId is provided
     if (!customerId) {
@@ -150,18 +162,23 @@ exports.getPreviousMonthUnits = async (req, res) => {
       .sort({ createdAt: -1 }) // Sort by most recent
       .limit(1);
 
+    console.log("Latest bill found:", latestBill);
+
     if (!latestBill) {
+      console.log("No bill found for customer");
       return res
         .status(404)
         .json({ message: "No billing record found for this customer" });
     }
 
-    return res.status(200).json({
+    const response = {
       customerId,
-      latestUnitsConsumed: latestBill.unitsConsumed, // Returning latest units consumed
-    });
+      currentReading: latestBill.currentReading,
+    };
+    console.log("Sending response:", response);
+    return res.status(200).json(response);
   } catch (error) {
-    console.error(error);
+    console.error("Error in getPreviousMonthUnits:", error);
     return res
       .status(500)
       .json({ message: "Error fetching latest units consumed" });
@@ -324,11 +341,14 @@ exports.downloadBill = async (req, res) => {
       ["Bill Number:", bill.billNumber || bill._id],
       ["Customer Name:", bill.customerId.name],
       ["Meter Serial No:", bill.meterSrNo],
-      ["Previous Reading:", bill.previousReading || "0"],
-      ["Current Reading:", bill.currentReading || bill.unitsConsumed],
-      ["Units Consumed:", bill.unitsConsumed],
-      ["Unit Price:", `Rs. ${bill.unitPrice || 35}`],
-      ["Total Amount:", `Rs. ${bill.totalBill}`],
+      ["Previous Reading:", (bill.previousReading || 0).toFixed(2)],
+      [
+        "Current Reading:",
+        bill.currentReading ? Number(bill.currentReading).toFixed(2) : "N/A",
+      ],
+      ["Units Consumed:", Number(bill.unitsConsumed).toFixed(2)],
+      ["Unit Price:", `Rs. ${Number(bill.unitPrice || 35).toFixed(2)}`],
+      ["Total Amount:", `Rs. ${Number(bill.totalBill).toFixed(2)}`],
       ["Due Date:", new Date(bill.dueDate || new Date()).toLocaleDateString()],
     ];
 
