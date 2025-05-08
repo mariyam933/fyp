@@ -15,6 +15,8 @@ import { useState } from "react";
 import EditBillModal from "./EditBillModal";
 import ConfirmBillDeleteModal from "./ConfirmDeleteBill";
 import { jsPDF } from "jspdf";
+import { axiosClient } from "@/utils/axiosClient";
+import { toast } from "react-hot-toast";
 
 interface getCol {
   setRefreshUI?: any;
@@ -119,203 +121,251 @@ export const billsColumns = (options: getCol = {}): ColumnDef<any>[] => {
       header: "Download",
       cell: ({ row }) => {
         const handleDownload = async () => {
-          const doc = new jsPDF();
+          try {
+            // Log the bill data from the database
+            console.log("Bill Data from Database:", {
+              meterSrNo: row.original.meterSrNo,
+              customerName: row.original.customerId.name,
+              unitsConsumed: row.original.unitsConsumed,
+              totalBill: row.original.totalBill,
+              imageUrl: row.original.imageUrl,
+              customerId: row.original.customerId,
+            });
 
-          doc.setProperties({
-            title: `Bill ${row.original.meterSrNo}`,
-            subject: "Electricity Bill",
-            author: "NUST Electricity Billing System",
-          });
+            // Fetch current settings
+            const settingsResponse = await axiosClient.get("/api/settings");
+            const settings = settingsResponse.data;
 
-          // Add NUST signature image
-          const nustSignature = new Image();
-          nustSignature.src = "/asset/images/NUST-Signature-01.png";
-          await new Promise((resolve) => {
-            nustSignature.onload = resolve;
-          });
-          doc.addImage(nustSignature, "PNG", 20, 10, 60, 30);
+            // Log the settings data
+            console.log("Settings Data:", settings);
 
-          if (row.original.imageUrl) {
-            try {
-              doc.setFontSize(12);
-              doc.setFont("helvetica", "normal");
-              doc.text("Meter Reading:", 150, 20, { align: "right" });
+            const doc = new jsPDF();
 
-              const img = new Image();
-              img.src = row.original.imageUrl;
+            doc.setProperties({
+              title: `Bill ${row.original.meterSrNo}`,
+              subject: "Electricity Bill",
+              author: "NUST Electricity Billing System",
+            });
 
-              await new Promise((resolve) => {
-                img.onload = resolve;
-              });
+            // Add NUST signature image
+            const nustSignature = new Image();
+            nustSignature.src = "/asset/images/NUST-Signature-01.png";
+            await new Promise((resolve) => {
+              nustSignature.onload = resolve;
+            });
+            doc.addImage(nustSignature, "PNG", 20, 10, 60, 30);
 
-              const imgWidth = 80;
-              const imgHeight = (img.height * imgWidth) / img.width;
-              doc.addImage(img, "JPEG", 110, 25, imgWidth, imgHeight);
-            } catch (error) {
-              console.error("Error adding image to PDF:", error);
+            if (row.original.imageUrl) {
+              try {
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "normal");
+                doc.text("Meter Reading:", 150, 20, { align: "right" });
+
+                const img = new Image();
+                img.src = row.original.imageUrl;
+
+                await new Promise((resolve) => {
+                  img.onload = resolve;
+                });
+
+                const imgWidth = 80;
+                const imgHeight = (img.height * imgWidth) / img.width;
+                doc.addImage(img, "JPEG", 110, 25, imgWidth, imgHeight);
+              } catch (error) {
+                console.error("Error adding image to PDF:", error);
+              }
             }
+
+            doc.setFontSize(20);
+            doc.setTextColor(0, 0, 255); // Blue color for title
+            doc.text("Electricity Bill", 20, row.original.imageUrl ? 50 : 45);
+
+            doc.setFontSize(10);
+            doc.setTextColor(255, 0, 0); // Red color for bill number
+            doc.text(
+              `Bill No: ${row.original.meterSrNo}`,
+              20,
+              row.original.imageUrl ? 60 : 55
+            );
+
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 139); // Dark blue for section headers
+            doc.text("Customer Details", 20, row.original.imageUrl ? 70 : 60);
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0); // Black for regular text
+            doc.text(
+              `Name: ${row.original.customerId.name}`,
+              20,
+              row.original.imageUrl ? 80 : 70
+            );
+            doc.text(
+              `Meter Serial Number: ${row.original.meterSrNo}`,
+              20,
+              row.original.imageUrl ? 90 : 80
+            );
+
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 139); // Dark blue for section headers
+            doc.text(
+              "Consumption Details",
+              20,
+              row.original.imageUrl ? 100 : 90
+            );
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0); // Black for regular text
+            doc.text(
+              `Total Units Consumed: ${row.original.unitsConsumed}`,
+              20,
+              row.original.imageUrl ? 110 : 100
+            );
+
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 139); // Dark blue for section headers
+            doc.text(
+              "Bill Calculation Details",
+              20,
+              row.original.imageUrl ? 120 : 110
+            );
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(255, 0, 0); // Dark red for column headers
+            doc.text("Component", 20, row.original.imageUrl ? 130 : 120);
+            doc.text("Amount (Rs.)", 150, row.original.imageUrl ? 130 : 120, {
+              align: "right",
+            });
+
+            doc.setDrawColor(0, 0, 255); // Blue color for lines
+            doc.line(
+              20,
+              row.original.imageUrl ? 135 : 125,
+              190,
+              row.original.imageUrl ? 135 : 125
+            );
+
+            doc.setFont("helvetica", "normal");
+            let y = row.original.imageUrl ? 145 : 135;
+
+            const lineSpacing = 8;
+
+            const electricCost =
+              row.original.unitsConsumed * settings.unitPrice;
+            const fc = row.original.unitsConsumed * settings.fcRate;
+            const qtrTax = row.original.unitsConsumed * settings.qtrRate;
+            const fpa = row.original.unitsConsumed * settings.fpaRate;
+            const subtotal =
+              electricCost +
+              fc +
+              qtrTax +
+              fpa +
+              settings.fixedCharges +
+              settings.ptvFee +
+              settings.meterRent +
+              settings.waterBill;
+            const gstBase = electricCost + fc + qtrTax;
+            const gst = gstBase * settings.gstRate;
+            const totalAmount = subtotal + gst;
+
+            // Regular charges in black
+            doc.setTextColor(0, 0, 0);
+            doc.text("Electric Cost", 20, y);
+            doc.text(electricCost.toFixed(2), 150, y, { align: "right" });
+            y += lineSpacing;
+
+            doc.text("Fuel Charges (FC)", 20, y);
+            doc.text(fc.toFixed(2), 150, y, { align: "right" });
+            y += lineSpacing;
+
+            doc.text("Quarterly Tax (QTR)", 20, y);
+            doc.text(qtrTax.toFixed(2), 150, y, { align: "right" });
+            y += lineSpacing;
+
+            doc.text("Fuel Price Adjustment (FPA)", 20, y);
+            doc.text(fpa.toFixed(2), 150, y, { align: "right" });
+            y += lineSpacing;
+
+            doc.text("Fixed Charges", 20, y);
+            doc.text(settings.fixedCharges.toFixed(2), 150, y, {
+              align: "right",
+            });
+            y += lineSpacing;
+
+            doc.text("PTV Fee", 20, y);
+            doc.text(settings.ptvFee.toFixed(2), 150, y, { align: "right" });
+            y += lineSpacing;
+
+            doc.text("Meter Rent", 20, y);
+            doc.text(settings.meterRent.toFixed(2), 150, y, { align: "right" });
+            y += lineSpacing;
+
+            doc.text("Water Bill", 20, y);
+            doc.text(settings.waterBill.toFixed(2), 150, y, { align: "right" });
+            y += lineSpacing;
+
+            // Subtotal in dark blue
+            doc.setTextColor(0, 0, 139);
+            doc.setFont("helvetica", "bold");
+            doc.text("Subtotal", 20, y);
+            doc.text(subtotal.toFixed(2), 150, y, { align: "right" });
+            y += lineSpacing;
+
+            // GST in dark red
+            doc.setTextColor(255, 0, 0);
+            doc.text("GST (18%)", 20, y);
+            doc.text(gst.toFixed(2), 150, y, { align: "right" });
+            y += lineSpacing;
+
+            doc.setDrawColor(0, 0, 255); // Blue color for lines
+            doc.line(20, y, 190, y);
+
+            // Total amount in dark blue and bold
+            doc.setTextColor(0, 0, 139);
+            doc.setFont("helvetica", "bold");
+            doc.text("Total Amount", 20, y + 5);
+            doc.text(totalAmount.toFixed(2), 150, y + 5, { align: "right" });
+
+            // Dates in black
+            doc.setTextColor(0, 0, 0);
+            doc.setFont("helvetica", "normal");
+            doc.text(
+              `Billing Date: ${new Date().toLocaleDateString()}`,
+              20,
+              y + 15
+            );
+            doc.text(
+              `Due Date: ${new Date(
+                Date.now() + 10 * 24 * 60 * 60 * 1000
+              ).toLocaleDateString()}`,
+              20,
+              y + 23
+            );
+
+            // Payment instructions in dark blue
+            doc.setTextColor(0, 0, 139);
+            doc.setFont("helvetica", "bold");
+            doc.text("Payment Instructions:", 20, y + 35);
+            doc.setFont("helvetica", "normal");
+            doc.text(
+              "1. Please pay the bill before the due date to avoid late payment charges.",
+              20,
+              y + 43
+            );
+            doc.text(
+              "2. Payment can be made through bank transfer or at our office.",
+              20,
+              y + 51
+            );
+            doc.text(
+              "3. For any queries, please contact our customer service.",
+              20,
+              y + 59
+            );
+
+            doc.save(`bill_${row.original.meterSrNo}.pdf`);
+          } catch (error) {
+            console.error("Error generating PDF:", error);
+            toast.error("Failed to generate PDF");
           }
-
-          doc.setFontSize(20);
-          doc.text("Electricity Bill", 20, row.original.imageUrl ? 50 : 45);
-          doc.setFontSize(10);
-          doc.text(
-            `Bill No: ${row.original.meterSrNo}`,
-            20,
-            row.original.imageUrl ? 60 : 55
-          );
-
-          doc.setFontSize(12);
-          doc.text("Customer Details", 20, row.original.imageUrl ? 70 : 60);
-          doc.setFontSize(10);
-          doc.text(
-            `Name: ${row.original.customerId.name}`,
-            20,
-            row.original.imageUrl ? 80 : 70
-          );
-          doc.text(
-            `Meter Serial Number: ${row.original.meterSrNo}`,
-            20,
-            row.original.imageUrl ? 90 : 80
-          );
-
-          doc.setFontSize(12);
-          doc.text("Consumption Details", 20, row.original.imageUrl ? 100 : 90);
-          doc.setFontSize(10);
-          doc.text(
-            `Total Units Consumed: ${row.original.unitsConsumed}`,
-            20,
-            row.original.imageUrl ? 110 : 100
-          );
-
-          doc.setFontSize(12);
-          doc.text(
-            "Bill Calculation Details",
-            20,
-            row.original.imageUrl ? 120 : 110
-          );
-
-          doc.setFontSize(10);
-          doc.setFont("helvetica", "bold");
-          doc.text("Component", 20, row.original.imageUrl ? 130 : 120);
-          doc.text("Amount (Rs.)", 150, row.original.imageUrl ? 130 : 120, {
-            align: "right",
-          });
-
-          doc.line(
-            20,
-            row.original.imageUrl ? 135 : 125,
-            190,
-            row.original.imageUrl ? 135 : 125
-          );
-
-          doc.setFont("helvetica", "normal");
-          let y = row.original.imageUrl ? 145 : 135;
-
-          const lineSpacing = 8;
-
-          const electricCost = row.original.unitsConsumed * 35;
-          doc.text("Electric Cost", 20, y);
-          doc.text(electricCost.toFixed(2), 150, y, { align: "right" });
-          y += lineSpacing;
-
-          const fc = row.original.unitsConsumed * 3.23;
-          doc.text("Fuel Charges (FC)", 20, y);
-          doc.text(fc.toFixed(2), 150, y, { align: "right" });
-          y += lineSpacing;
-
-          const qtrTax = row.original.unitsConsumed * 0.5;
-          doc.text("Quarterly Tax (QTR)", 20, y);
-          doc.text(qtrTax.toFixed(2), 150, y, { align: "right" });
-          y += lineSpacing;
-
-          const fpaRate = 0.1;
-          const fpa = row.original.unitsConsumed * fpaRate;
-          doc.text("Fuel Price Adjustment (FPA)", 20, y);
-          doc.text(fpa.toFixed(2), 150, y, { align: "right" });
-          y += lineSpacing;
-
-          const fixedCharges = 1000;
-          doc.text("Fixed Charges", 20, y);
-          doc.text(fixedCharges.toFixed(2), 150, y, { align: "right" });
-          y += lineSpacing;
-
-          const ptvFee = 35;
-          doc.text("PTV Fee", 20, y);
-          doc.text(ptvFee.toFixed(2), 150, y, { align: "right" });
-          y += lineSpacing;
-
-          const meterRent = 25;
-          doc.text("Meter Rent", 20, y);
-          doc.text(meterRent.toFixed(2), 150, y, { align: "right" });
-          y += lineSpacing;
-
-          const waterBill = 250;
-          doc.text("Water Bill", 20, y);
-          doc.text(waterBill.toFixed(2), 150, y, { align: "right" });
-          y += lineSpacing;
-
-          const subtotal =
-            electricCost +
-            fc +
-            qtrTax +
-            fpa +
-            fixedCharges +
-            ptvFee +
-            meterRent +
-            waterBill;
-          doc.setFont("helvetica", "bold");
-          doc.text("Subtotal", 20, y);
-          doc.text(subtotal.toFixed(2), 150, y, { align: "right" });
-          y += lineSpacing;
-
-          const gstBase = electricCost + fc + qtrTax;
-          const gst = gstBase * 0.18;
-          doc.text("GST (18%)", 20, y);
-          doc.text(gst.toFixed(2), 150, y, { align: "right" });
-          y += lineSpacing;
-
-          doc.line(20, y, 190, y);
-
-          const totalAmount = subtotal + gst;
-          doc.setFont("helvetica", "bold");
-          doc.text("Total Amount", 20, y + 5);
-          doc.text(totalAmount.toFixed(2), 150, y + 5, { align: "right" });
-
-          doc.setFont("helvetica", "normal");
-          doc.text(
-            `Billing Date: ${new Date().toLocaleDateString()}`,
-            20,
-            y + 15
-          );
-          doc.text(
-            `Due Date: ${new Date(
-              Date.now() + 10 * 24 * 60 * 60 * 1000
-            ).toLocaleDateString()}`,
-            20,
-            y + 23
-          );
-
-          doc.setFont("helvetica", "bold");
-          doc.text("Payment Instructions:", 20, y + 35);
-          doc.setFont("helvetica", "normal");
-          doc.text(
-            "1. Please pay the bill before the due date to avoid late payment charges.",
-            20,
-            y + 43
-          );
-          doc.text(
-            "2. Payment can be made through bank transfer or at our office.",
-            20,
-            y + 51
-          );
-          doc.text(
-            "3. For any queries, please contact our customer service.",
-            20,
-            y + 59
-          );
-
-          doc.save(`bill_${row.original.meterSrNo}.pdf`);
         };
 
         return (

@@ -1,4 +1,4 @@
-import * as React from "react"
+import * as React from "react";
 import {
   SortingState,
   flexRender,
@@ -7,10 +7,10 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -18,23 +18,27 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
-import { Spinner } from "@/components/ui/loader"
-import { useRouter } from "next/router"
-import CreateCustomerModal from "./CreateCustomerModal"
-import { customerColumns } from "./customer-columns"
+import { Spinner } from "@/components/ui/loader";
+import { useRouter } from "next/router";
+import CreateCustomerModal from "./CreateCustomerModal";
+import { customerColumns } from "./customer-columns";
 
 interface DataTableDemoProps {
-  tabledata: any[],
-  loading?: boolean,
-  setRefreshUI: React.Dispatch<React.SetStateAction<boolean>>
+  tabledata: any[];
+  loading?: boolean;
+  setRefreshUI: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function CustomersTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
+export default function CustomersTable({
+  tabledata,
+  loading,
+  setRefreshUI,
+}: DataTableDemoProps) {
+  const [sorting, setSorting] = React.useState<SortingState>([]);
 
-  const router = useRouter()
+  const router = useRouter();
 
   const table = useReactTable({
     data: tabledata || [],
@@ -47,42 +51,54 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
     state: {
       sorting,
     },
-  })
+  });
 
   // Define max number of page buttons to show
-  const maxPageButtons = 5
+  const maxPageButtons = 5;
 
   // Helper function to determine which page buttons to show
   const getPageButtons = () => {
-    const pageIndex = table.getState().pagination.pageIndex
-    const pageCount = table.getPageCount()
-    let startPage = Math.max(pageIndex - Math.floor(maxPageButtons / 2), 0)
-    let endPage = startPage + maxPageButtons - 1
+    const pageIndex = table.getState().pagination.pageIndex;
+    const pageCount = table.getPageCount();
+    let startPage = Math.max(pageIndex - Math.floor(maxPageButtons / 2), 0);
+    let endPage = startPage + maxPageButtons - 1;
 
     if (endPage >= pageCount) {
-      endPage = pageCount - 1
-      startPage = Math.max(endPage - maxPageButtons + 1, 0)
+      endPage = pageCount - 1;
+      startPage = Math.max(endPage - maxPageButtons + 1, 0);
     }
 
-    const pages = [] as any[]
+    const pages = [] as any[];
     for (let i = startPage; i <= endPage; i++) {
-      pages.push(i)
+      pages.push(i);
     }
-    return pages
-  }
+    return pages;
+  };
 
   return (
     <div className="w-full">
-      <h1 className='text-xl text-gray-700 font-semibold'>All Admins</h1>
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Search customers by name..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
+      <h1 className="text-xl text-gray-700 font-semibold">All Admins</h1>
+      <div className="flex items-center justify-between py-4">
+        <div className="flex items-center gap-4">
+          <Input
+            placeholder="Search customers by name..."
+            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn("name")?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+          <Input
+            placeholder="Search customers by meter no..."
+            value={
+              (table.getColumn("meterNo")?.getFilterValue() as string) ?? ""
+            }
+            onChange={(event) =>
+              table.getColumn("meterNo")?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+        </div>
         <CreateCustomerModal setRefreshUI={setRefreshUI} />
       </div>
       <div className="rounded-md border">
@@ -95,53 +111,49 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {loading ?
+            {loading ? (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
                   <Spinner size="small" show={loading} />
                 </TableCell>
               </TableRow>
-              :
-              table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    // onClick={() => router.push(`/customers/${row.original._id}`)}
-                    className="cursor-pointer hover:bg-gray-100"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  // onClick={() => router.push(`/customers/${row.original._id}`)}
+                  className="cursor-pointer hover:bg-gray-100"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
                 </TableRow>
-              )}
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
-      {tabledata?.length > 0 &&
+      {tabledata?.length > 0 && (
         <div className="flex items-center">
           <div className="text-sm text-gray-600 ml-1">
             Page {table.getState().pagination.pageIndex + 1} of{" "}
@@ -159,7 +171,11 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
             {getPageButtons().map((page) => (
               <Button
                 key={page}
-                variant={table.getState().pagination.pageIndex === page ? "default" : "outline"}
+                variant={
+                  table.getState().pagination.pageIndex === page
+                    ? "default"
+                    : "outline"
+                }
                 size="sm"
                 onClick={() => table.setPageIndex(page)}
               >
@@ -176,7 +192,7 @@ export default function CustomersTable({ tabledata, loading, setRefreshUI }: Dat
             </Button>
           </div>
         </div>
-      }
+      )}
     </div>
-  )
+  );
 }
