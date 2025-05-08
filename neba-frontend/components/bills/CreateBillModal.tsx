@@ -22,12 +22,17 @@ export default function CreateBillModal({ setRefreshUI }) {
   const [scanLoading, setScanLoading] = useState(false);
   const [scanResults, setScanResults] = useState<any>(null);
   const [unitPrice, setUnitPrice] = useState<number>(35);
+  const [previousReading, setPreviousReading] = useState<number | null>(null);
+  const [isNewCustomer, setIsNewCustomer] = useState(false);
 
   const router = useRouter();
 
   useEffect(() => {
     fetchUnitPrice();
-  }, []);
+    if (router.query.customerId) {
+      fetchPreviousReading();
+    }
+  }, [router.query.customerId]);
 
   const fetchUnitPrice = async () => {
     try {
@@ -36,6 +41,26 @@ export default function CreateBillModal({ setRefreshUI }) {
     } catch (error) {
       console.error("Error fetching unit price:", error);
       toast.error("Failed to load unit price");
+    }
+  };
+
+  const fetchPreviousReading = async () => {
+    try {
+      console.log(
+        "Fetching previous reading for customer:",
+        router.query.customerId
+      );
+      const response = await axiosClient.get(
+        `/api/bill/prev/${router.query.customerId}`
+      );
+      console.log("Previous reading response:", response.data);
+      setPreviousReading(response.data.currentReading);
+      console.log("Set previous reading to:", response.data.currentReading);
+      setIsNewCustomer(false);
+    } catch (error) {
+      console.error("Error fetching previous reading:", error);
+      setIsNewCustomer(true);
+      setPreviousReading(null);
     }
   };
 
@@ -71,21 +96,13 @@ export default function CreateBillModal({ setRefreshUI }) {
 
     setScanLoading(true);
 
-    // Convert image to Base64
-    // const toBase64 = (file) =>
-    //   new Promise((resolve, reject) => {
-    //     const reader = new FileReader();
-    //     reader.readAsDataURL(file);
-    //     reader.onload = () => reader.result && resolve(reader.result.split(",")[1]); // Remove "data:image/png;base64,"
-    //     reader.onerror = reject;
-    //   });
     const toBase64 = (file: File): Promise<string> =>
       new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = () => {
           if (typeof reader.result === "string") {
-            resolve(reader.result.split(",")[1]); // Remove "data:image/png;base64,"
+            resolve(reader.result.split(",")[1]);
           } else {
             reject(new Error("FileReader result is not a string"));
           }
@@ -110,7 +127,6 @@ export default function CreateBillModal({ setRefreshUI }) {
 
       const response = await fetch(
         `https://vision.googleapis.com/v1/images:annotate?key=AIzaSyBEiQDIcXhStgzDIsiT094waRwcMHXf9Zc`,
-
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -119,27 +135,15 @@ export default function CreateBillModal({ setRefreshUI }) {
       );
 
       const data = await response.json();
-
       console.log("Data is as", data);
 
       if (data.responses && data.responses[0].textAnnotations) {
         const formattedText = data.responses[0].textAnnotations[0].description;
-
-        // Ensure each new value is on a new line
         const extractedText = formattedText.replace(/\s+/g, "\n");
-
         console.log("Extracted is as", extractedText);
 
-        // const extractedKWh = extractedText.match(/(\d+)\s*kWh/i)?.[1] || "Unknown";
-        //         const numbers = extractedText.match(/\d+/g)?.map(Number) || [];
-
-        // const largestNumber = numbers.length > 0 ? Math.max(...numbers) : "Unknown";
-
-        // console.log("Largest Number:", largestNumber)
         const numbers =
-          extractedText
-            .match(/\b\d+\b/g) // Match standalone numbers
-            ?.map((num) => Number(num)) || []; // Convert to numbers
+          extractedText.match(/\b\d+\b/g)?.map((num) => Number(num)) || [];
 
         const ignoredYears = new Set([
           2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020,
@@ -147,8 +151,7 @@ export default function CreateBillModal({ setRefreshUI }) {
         ]);
 
         const validNumbers = numbers.filter((num) => !ignoredYears.has(num));
-
-        let largestNumber: number | string =
+        let largestNumber =
           validNumbers.length > 0 ? Math.max(...validNumbers) : "Unknown";
 
         if (
@@ -159,11 +162,11 @@ export default function CreateBillModal({ setRefreshUI }) {
         }
 
         const parsedData = {
-          unitsConsumed: largestNumber,
-          totalBill: parseFloat(extractedText.match(/\d+\.\d+/)?.[0]) || 0.0,
+          currentReading: largestNumber,
           meterSrNo: router.query.meterNo,
         };
 
+        console.log("Scanned values:", parsedData);
         setScanResults(parsedData);
       } else {
         toast.error("No text detected in the bill.");
@@ -179,6 +182,11 @@ export default function CreateBillModal({ setRefreshUI }) {
   const createBill = async () => {
     if (!scanResults) {
       toast.error("Please scan the bill first.");
+      return;
+    }
+
+    if (isNewCustomer && previousReading === null) {
+      toast.error("Please enter the previous reading for new customer.");
       return;
     }
 
@@ -225,21 +233,27 @@ export default function CreateBillModal({ setRefreshUI }) {
       const imageBase64 = file ? await optimizeAndConvertImage(file) : null;
 
       const data = {
-        currentReading: scanResults.unitsConsumed,
-        totalBill: scanResults.totalBill,
-        meterSrNo: router.query.meterNo,
+        currentReading: scanResults.currentReading,
+        previousReading: isNewCustomer ? previousReading : previousReading,
+        meterSrNo: scanResults.meterSrNo || router.query.meterNo,
         customerId: router.query.customerId,
         imageFile: imageBase64,
-        unitPrice: unitPrice,
+        unitPrice: scanResults.unitPrice || unitPrice,
       };
 
+      console.log("Sending to backend:", data);
       await axiosClient.post("/api/bill", data);
       toast.success("Bill created successfully");
+
+      // Fetch the latest previous reading after creating the bill
+      await fetchPreviousReading();
+
       setRefreshUI((prev) => !prev);
       setShowModal(false);
       setFile(null);
       setScanResults(null);
       setUnitPrice(35);
+      setIsNewCustomer(false);
     } catch (error) {
       console.error("Error creating bill:", error);
       toast.error(error.response?.data?.message || "Something went wrong");
@@ -323,11 +337,41 @@ export default function CreateBillModal({ setRefreshUI }) {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="font-medium text-black">
+                        Previous Reading:
+                      </span>
+                      {isNewCustomer ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            value={
+                              previousReading === null ? "" : previousReading
+                            }
+                            onChange={(e) =>
+                              setPreviousReading(
+                                e.target.value === ""
+                                  ? null
+                                  : Number(e.target.value)
+                              )
+                            }
+                            className="w-[170px] h-8"
+                            min="0"
+                            placeholder="Enter previous reading"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-black">
+                          {previousReading !== null
+                            ? previousReading
+                            : "No previous reading"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-black">
                         Current Reading:
                       </span>
                       <span className="text-black">
-                        {scanResults.currentReading ||
-                          scanResults.unitsConsumed}
+                        {scanResults.currentReading}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -335,7 +379,7 @@ export default function CreateBillModal({ setRefreshUI }) {
                         Units Consumed:
                       </span>
                       <span className="text-black">
-                        {scanResults.unitsConsumed}
+                        {scanResults.currentReading - (previousReading || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -353,7 +397,8 @@ export default function CreateBillModal({ setRefreshUI }) {
                       <span className="text-black font-semibold">
                         Rs.{" "}
                         {(
-                          scanResults.unitsConsumed *
+                          (scanResults.currentReading -
+                            (previousReading || 0)) *
                           (scanResults.unitPrice || unitPrice)
                         ).toFixed(2)}
                       </span>
@@ -366,7 +411,12 @@ export default function CreateBillModal({ setRefreshUI }) {
           <DialogFooter>
             <Button
               type="submit"
-              disabled={loading || scanLoading || !scanResults}
+              disabled={
+                loading ||
+                scanLoading ||
+                !scanResults ||
+                (isNewCustomer && previousReading === null)
+              }
               onClick={createBill}
               className="flex items-center gap-2"
             >

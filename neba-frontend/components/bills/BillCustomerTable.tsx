@@ -1,5 +1,5 @@
-import * as React from "react"
-import { useEffect } from "react"
+import * as React from "react";
+import { useEffect } from "react";
 import {
   SortingState,
   flexRender,
@@ -8,10 +8,10 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -19,27 +19,31 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
-import { Spinner } from "@/components/ui/loader"
-import { useRouter } from "next/router"
-import CreateCustomerModal from "../customers/CreateCustomerModal"
-import { billCustomerTableColumns } from "./bill-customertable-column"
-import { customerColumns } from "../customers/customer-columns"
-import { useAuth } from "@/context/auth"
+import { Spinner } from "@/components/ui/loader";
+import { useRouter } from "next/router";
+import CreateCustomerModal from "../customers/CreateCustomerModal";
+import { billCustomerTableColumns } from "./bill-customertable-column";
+import { customerColumns } from "../customers/customer-columns";
+import { useAuth } from "@/context/auth";
 
 interface DataTableDemoProps {
-  tabledata: any[],
-  loading?: boolean,
-  setRefreshUI: React.Dispatch<React.SetStateAction<boolean>>
+  tabledata: any[];
+  loading?: boolean;
+  setRefreshUI: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function BillCustomerTable({ tabledata, loading, setRefreshUI }: DataTableDemoProps) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
+export default function BillCustomerTable({
+  tabledata,
+  loading,
+  setRefreshUI,
+}: DataTableDemoProps) {
+  const [sorting, setSorting] = React.useState<SortingState>([]);
 
-  const auth=useAuth();
+  const auth = useAuth();
   const userId = auth?.user?.id;
-  const userRole=Number(auth?.user?.role);
+  const userRole = Number(auth?.user?.role);
 
   useEffect(() => {
     if (userRole === 2) {
@@ -47,8 +51,7 @@ export default function BillCustomerTable({ tabledata, loading, setRefreshUI }: 
     }
   }, [userRole, userId]);
 
-
-  const router = useRouter()
+  const router = useRouter();
 
   const table = useReactTable({
     data: tabledata || [],
@@ -61,39 +64,47 @@ export default function BillCustomerTable({ tabledata, loading, setRefreshUI }: 
     state: {
       sorting,
     },
-  })
+  });
 
   // Define max number of page buttons to show
-  const maxPageButtons = 5
+  const maxPageButtons = 5;
 
   // Helper function to determine which page buttons to show
   const getPageButtons = () => {
-    const pageIndex = table.getState().pagination.pageIndex
-    const pageCount = table.getPageCount()
-    let startPage = Math.max(pageIndex - Math.floor(maxPageButtons / 2), 0)
-    let endPage = startPage + maxPageButtons - 1
+    const pageIndex = table.getState().pagination.pageIndex;
+    const pageCount = table.getPageCount();
+    let startPage = Math.max(pageIndex - Math.floor(maxPageButtons / 2), 0);
+    let endPage = startPage + maxPageButtons - 1;
 
     if (endPage >= pageCount) {
-      endPage = pageCount - 1
-      startPage = Math.max(endPage - maxPageButtons + 1, 0)
+      endPage = pageCount - 1;
+      startPage = Math.max(endPage - maxPageButtons + 1, 0);
     }
 
-    const pages = [] as any[]
+    const pages = [] as any[];
     for (let i = startPage; i <= endPage; i++) {
-      pages.push(i)
+      pages.push(i);
     }
-    return pages
-  }
+    return pages;
+  };
 
   return (
     <div className="w-full">
-      <h1 className='text-xl text-gray-700 font-semibold'>All Customers</h1>
-      <div className="flex items-center py-4">
+      <h1 className="text-xl text-gray-700 font-semibold">All Customers</h1>
+      <div className="flex items-center gap-4 py-4">
         <Input
           placeholder="Search customers by name..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
+          }
+          className="max-w-sm"
+        />
+        <Input
+          placeholder="Search customers by meter no..."
+          value={(table.getColumn("meterNo")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("meterNo")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -108,53 +119,53 @@ export default function BillCustomerTable({ tabledata, loading, setRefreshUI }: 
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {loading ?
+            {loading ? (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
                   <Spinner size="small" show={loading} />
                 </TableCell>
               </TableRow>
-              :
-              table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    onClick={() => router.push(`/customers/${row.original._id}?meterNo=${row.original.meterNo}`)}
-                    className="cursor-pointer hover:bg-gray-100"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  onClick={() =>
+                    router.push(
+                      `/customers/${row.original._id}?meterNo=${row.original.meterNo}`
+                    )
+                  }
+                  className="cursor-pointer hover:bg-gray-100"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
                 </TableRow>
-              )}
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
-      {tabledata?.length > 0 &&
+      {tabledata?.length > 0 && (
         <div className="flex items-center">
           <div className="text-sm text-gray-600 ml-1">
             Page {table.getState().pagination.pageIndex + 1} of{" "}
@@ -172,7 +183,11 @@ export default function BillCustomerTable({ tabledata, loading, setRefreshUI }: 
             {getPageButtons().map((page) => (
               <Button
                 key={page}
-                variant={table.getState().pagination.pageIndex === page ? "default" : "outline"}
+                variant={
+                  table.getState().pagination.pageIndex === page
+                    ? "default"
+                    : "outline"
+                }
                 size="sm"
                 onClick={() => table.setPageIndex(page)}
               >
@@ -189,7 +204,7 @@ export default function BillCustomerTable({ tabledata, loading, setRefreshUI }: 
             </Button>
           </div>
         </div>
-      }
+      )}
     </div>
-  )
+  );
 }
