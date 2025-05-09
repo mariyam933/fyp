@@ -392,7 +392,7 @@ export default function CreateBillModal({ setRefreshUI }) {
                     </div>
                     <div className="flex justify-between items-center border-t pt-2">
                       <span className="font-medium text-black">
-                        Total Amount:
+                        Total Electricity Cost:
                       </span>
                       <span className="text-black font-semibold">
                         Rs.{" "}

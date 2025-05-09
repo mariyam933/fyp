@@ -25,6 +25,7 @@ export default function Bills() {
         const billsRes = await axiosClient.get(
           "api/bill/" + router.query.customerId
         );
+        console.log(billsRes, "7777");
         // Add customer name to each bill
         const billsWithCustomer = billsRes.data.map((bill: any) => ({
           ...bill,
